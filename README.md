@@ -1,5 +1,5 @@
-# 🚀 Assertiveness Training
-A helper tool to practice speaking more clearly in a concise manner. Improve your assertiveness!! Displays a random topic for you to talk about. 
+# 🚀 Assertiveness Practice
+Many people struggle to speak up. In therapy, at work, in relationships, to themselves, or in any other situation. Assertiveness Practice is a free, open tool to help build that skill through low-pressure repetition. It gives you a random topic, a timer, and a space to just talk. You can do it alone or with a partner.
 
 ## How To Use
 A topic and image is shown to you on the [home page](https://assertiveness-training.vercel.app/). Talk about the topic for the selected amount of time. When the timer runs out, the app will automatically display a new one. You can do this by yourself or with a partner! The timer is also customizable!

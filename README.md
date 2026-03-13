@@ -13,17 +13,19 @@ Screenshots:
 <img width="1920" height="1080" alt="5" src="https://github.com/user-attachments/assets/4759e7b4-b597-48a8-a25b-576f16627d0e" />
 
 
-# Development Docs
-
-## Routes
- - `/api/topic` - Returns a random topic from DB
- - `/api/process/names` - Processes any new names added to the list. Include an optional `size` parameter to specify the number of topics to process at a time. You can add a new name to the list [here](./data/topics.ts). More easier support for adding topics is on the way!
-
-## Topics API
-topics are processed from a file, to the database, setting the image by utilizing the unsplash apis. On the home page, it calls the db for a random topic displaying it to the user along with the image.
-
-## Incoming Features
- - ✔️ Implement configurable timer for how long to speak about the topic(Implemented with [this commit](https://github.com/razznblue/assertiveness/commit/929b0a5a80bec5f9c2922747da38a5f1fd265472))
- - Record your speaking session
- - Rate your session
- - User session so data can be saved per user
+    
+<details>
+<summary>Development Docs</summary>
+  ## Routes
+   - `/api/topic` - Returns a random topic from DB
+   - `/api/process/names` - Processes any new names added to the list. Include an optional `size` parameter to specify the number of topics to process at a time. You can add a new name to the list [here](./data/topics.ts). More easier support for adding topics is on the way!
+  
+  ## Topics API
+  topics are processed from a file, to the database, setting the image by utilizing the unsplash apis. On the home page, it calls the db for a random topic displaying it to the user along with the image.
+  
+  ## Roadmap
+   - ✔️ Implement configurable timer for how long to speak about the topic(Implemented with [this commit](https://github.com/razznblue/assertiveness/commit/929b0a5a80bec5f9c2922747da38a5f1fd265472))
+   - Record your speaking session
+   - Rate your session
+   - User session so data can be saved per user
+</details>

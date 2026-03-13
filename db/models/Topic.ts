@@ -1,4 +1,4 @@
-import { modelOptions, prop, getModelForClass } from '@typegoose/typegoose'
+import { modelOptions, prop } from '@typegoose/typegoose'
 
 @modelOptions({ schemaOptions: { collection: 'Topic', versionKey: false, timestamps: true } })
 class Topic {
@@ -9,4 +9,4 @@ class Topic {
   public image: string
 }
 
-export default getModelForClass(Topic)
+export default Topic

@@ -3,7 +3,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import dbConnect from '@/db/dbConnect'
 const ObjectId = require('mongoose').Types.ObjectId
-import User from '@/db/models/User'
+import { UserModel } from '@/db/models'
 import { handleUnexpectedError, throw404 } from '@/helpers/APIHelper'
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -18,7 +18,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     /* UPDATE User */
     if (req.method === 'PATCH' && id) {
       try {
-        const user = await User.findById(id).exec()
+        const user = await UserModel.findById(id).exec()
         if (!user) return throw404(res, `player with ID ${id} does not exist`)
         if (user) {
           const updatedKeys: string[] = []
@@ -27,12 +27,12 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
               /* updating settings */
               if (key === 'settings') {
                 if (value?.defaultTimer) {
-                  console.log('setting timer')
                   user[key].defaultTimer = value?.defaultTimer
+                  updatedKeys.push(key)
                 }
                 if (value?.autofillSessionName !== undefined) {
-                  console.log('boole')
                   user[key].autofillSessionName = value?.autofillSessionName
+                  updatedKeys.push(key)
                 }
               } else {
                 /* default updating */
@@ -52,7 +52,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       /* GET User */
     } else if (req?.method === 'GET' && id) {
       try {
-        const user = await User.findById(id)
+        const user = await UserModel.findById(id)
         if (!user) {
           return throw404(res, `Player with Id ${id} not found`)
         }

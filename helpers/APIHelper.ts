@@ -1,4 +1,4 @@
-import User from '@/db/models/User'
+import { UserModel } from '@/db/models'
 import dbConnect from '@/db/dbConnect'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../pages/api/auth/[...nextauth]'
@@ -22,7 +22,7 @@ export const authorizeSession = async (
 export const userIsAdmin = async (username: string, email: string) => {
   await dbConnect()
   if (username) {
-    const player = await User.findOne({ username: username, email: email })
+    const player = await UserModel.findOne({ username: username, email: email })
     if (player) {
       return player.isAdmin || false
     } else {
@@ -50,7 +50,7 @@ export const authenticateKey = async (
     return res.status(400).send(`Authentication Invalid. Job ${resource} was not processed`)
   }
   await dbConnect()
-  const admin = await User.findOne({ username: username, accessKey: accessKey })
+  const admin = await UserModel.findOne({ username: username, accessKey: accessKey })
   if (!admin) {
     console.warn(`Unauthorized. Job ${resource} was not processed`)
     return res.status(401).send(`Unauthorized. Job ${resource} was not processed`)

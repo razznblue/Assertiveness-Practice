@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import dbConnect from '@/db/dbConnect'
-import Topic from '@/db/models/Topic'
+import { TopicModel } from '@/db/models'
 import axios from 'axios'
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -12,7 +12,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(400).json({ error: 'Name not found on Request Body' })
   }
 
-  const existingTopic = await Topic.findOne({ name })
+  const existingTopic = await TopicModel.findOne({ name })
   if (existingTopic) {
     return res.status(409).json({ error: 'Topic already exists', existingTopic })
   }
@@ -21,7 +21,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const imgResponse = await axios.get(unsplashURL)
   const imageURL = imgResponse?.data?.results[0].urls?.regular
 
-  const newTopic = new Topic({ name: name, image: imageURL })
+  const newTopic = new TopicModel({ name: name, image: imageURL })
 
   await newTopic.save()
   console.log('created new topic', { topic: newTopic })

@@ -1,6 +1,5 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
-import User from '@/db/models/User'
 import dbConnect from '@/db/dbConnect'
 import axios from 'axios'
 import { userIsAdmin } from '@/helpers/APIHelper'
@@ -46,11 +45,21 @@ export const authOptions = {
         const provider = credentials?.account?.provider?.toUpperCase()
         const providerId = credentials?.account?.providerAccountId
 
+        const apiBaseUrl = process.env.NEXTAUTH_URL
+        console.log('baseUrl', apiBaseUrl)
+
+        console.log('well')
         await dbConnect()
-        const potentialUser = await User.findOne({
-          username: username,
-          'provider.providerId': providerId,
-        })
+        console.log('poo')
+        console.log(`${apiBaseUrl}/api/users?username=${username}&providerId=${providerId}`)
+        const res = await axios.get(
+          `${apiBaseUrl}/api/users?username=${username}&providerId=${providerId}`
+        )
+        console.log('um')
+        const potentialUser = res?.data
+        console.log('res', res)
+        console.log('data ', res?.data)
+        console.log('good2')
 
         if (!potentialUser) {
           console.info(

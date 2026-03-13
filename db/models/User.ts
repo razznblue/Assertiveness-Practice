@@ -1,4 +1,4 @@
-import { modelOptions, prop, getModelForClass } from '@typegoose/typegoose'
+import { modelOptions, prop } from '@typegoose/typegoose'
 import { defaultAvatarImg } from '@/util/constants'
 
 @modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false } })
@@ -46,4 +46,4 @@ class User {
   // public collectionId: typegoose.Ref<PlayerCollection>
 }
 
-export default getModelForClass(User)
+export default User

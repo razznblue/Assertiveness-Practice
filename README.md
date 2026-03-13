@@ -1,6 +1,15 @@
 # 🚀 Assertiveness Training
 A helper tool to practice speaking more clearly in a concise manner. Improve your assertiveness!! Displays a random topic for you to talk about. 
 
+Screenshots:
+
+<img width="1920" height="1080" alt="1" src="https://github.com/user-attachments/assets/aa7cb3f2-8023-40b2-9ad8-e243c6db8480" />
+<img width="1920" height="1080" alt="2" src="https://github.com/user-attachments/assets/bca41d62-0d2a-41e1-9166-6bcea2d877eb" />
+<img width="1920" height="1080" alt="3" src="https://github.com/user-attachments/assets/a6604e4c-9319-4bf7-829d-e8fc990c9a24" />
+<img width="1920" height="1080" alt="4" src="https://github.com/user-attachments/assets/c3587f65-bc3f-4dbc-be81-dd6f0f3e6c5f" />
+<img width="1920" height="1080" alt="5" src="https://github.com/user-attachments/assets/4759e7b4-b597-48a8-a25b-576f16627d0e" />
+
+
 ## How To Use
 A topic and image is shown to you on the [home page](https://assertiveness-training.vercel.app/). Talk about the topic for the selected amount of time. When the timer runs out, the app will automatically display a new one. You can do this by yourself or with a partner! The timer is also customizable!
 

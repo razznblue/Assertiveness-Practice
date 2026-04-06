@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
-import AudioRecorder from '../audio'
+import AudioRecorder from '@/components/AudioRecorder/AudioRecorder'
 import axios from 'axios'
 import { useEffect, useState, useRef } from 'react'
 

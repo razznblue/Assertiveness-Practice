@@ -22,9 +22,9 @@ export const authorizeSession = async (
 export const userIsAdmin = async (username: string, email: string) => {
   await dbConnect()
   if (username) {
-    const player = await UserModel.findOne({ username: username, email: email })
-    if (player) {
-      return player.isAdmin || false
+    const user = await UserModel.findOne({ username: username, email: email })
+    if (user) {
+      return user.isAdmin || false
     } else {
       console.warn(`Could not identify player with username ${username}`)
       return false

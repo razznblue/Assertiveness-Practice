@@ -1,8 +1,8 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import dbConnect from '@/db/dbConnect'
-import axios from 'axios'
 import { userIsAdmin } from '@/helpers/APIHelper'
+import { UserModel } from '@/db/models'
 
 /* Google Login Logic */
 export const authOptions = {
@@ -40,50 +40,39 @@ export const authOptions = {
       try {
         // Set Up User Info
         const user = credentials?.user
-        const startupEmail = credentials?.user?.email
+        const email = credentials?.user?.email
         const username = credentials?.user?.name
         const provider = credentials?.account?.provider?.toUpperCase()
         const providerId = credentials?.account?.providerAccountId
 
         const apiBaseUrl = process.env.NEXTAUTH_URL
-        console.log('baseUrl', apiBaseUrl)
 
-        console.log('well')
         await dbConnect()
-        console.log('poo')
-        console.log(`${apiBaseUrl}/api/users?username=${username}&providerId=${providerId}`)
-        const res = await axios.get(
-          `${apiBaseUrl}/api/users?username=${username}&providerId=${providerId}`
-        )
-        console.log('um')
-        const potentialUser = res?.data
-        console.log('res', res)
-        console.log('data ', res?.data)
-        console.log('good2')
+        console.log('DB connected, checking for user:', username)
+        // console.log(`${apiBaseUrl}/api/users?username=${username}&providerId=${providerId}`)
+        // const res = await axios.get(
+        //   `${apiBaseUrl}/api/users?username=${username}&providerId=${providerId}`
+        // )
+        const existingUser = await UserModel.findOne({
+          username,
+          'provider.providerId': providerId,
+        })
 
-        if (!potentialUser) {
-          console.info(
-            `${username} does not have an account. Creating one now and logging them in!!`
-          )
-
-          const appBaseUrl = process.env.APP_URL
-          const newUser = await axios.post(`${appBaseUrl}/api/users`, {
-            username: user?.name,
-            email: startupEmail,
-            provider: {
-              name: provider,
-              providerId: providerId,
-            },
-            settings: {
-              defaultTimer: 60,
-              autofillSessionName: false,
-            },
+        if (!existingUser) {
+          console.info(`${username} does not have an account. Creating now.`)
+          const newUser = new UserModel({
+            username,
+            email,
+            provider: { name: provider, providerId },
+            settings: { defaultTimer: 60, autofillSessionName: false },
           })
-          console.log('created new user, saweeeet')
-          return newUser.data
+          const saved = await newUser.save()
+          console.log('New user saved:', saved._id)
+        } else {
+          console.log(`Welcome back ${username}!`)
         }
-        console.log(`Welcome back ${username}! Logging you in`)
-        return potentialUser
+
+        return true
       } catch (err) {
         console.error(err)
         console.error(`err logging in user ${credentials?.user?.name}.`)

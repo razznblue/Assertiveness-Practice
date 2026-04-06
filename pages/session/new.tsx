@@ -34,7 +34,11 @@ export default function NewSession() {
 
   const createNewTopic = async () => {
     if (topic && topic !== '') {
-      await axios.post('/api/topics', { name: topic })
+      try {
+        await axios.post('/api/topics', { name: topic })
+      } catch (e) {
+        console.error('Server Side Error: ', e)
+      }
     }
   }
 
@@ -69,7 +73,6 @@ export default function NewSession() {
     fetchUserId()
   }, [session])
 
-  /* JSX */
   return (
     <div className="flex items-center justify-center h-screen">
       <main className="flex flex-col items-center justify-start mt-20 h-full">
@@ -150,7 +153,7 @@ export default function NewSession() {
               />
               <Button
                 text="Start"
-                link="/session/:id"
+                link={`/session/${sessionName}`}
                 backgroundColor="bg-primary"
                 clickFunction={handleStartClick}
                 disableLink={false}

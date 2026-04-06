@@ -44,7 +44,7 @@ export default function Home() {
 
             <div id="bottom-content" className="flex flex-col items-center justify-evenly">
               <div id="topic-of-day" className="text-white text">
-                <p className="text-lg pb-4 mb-1">Topic Of The Day: {topicOfDay}</p>
+                <p className="text-xl pb-4 mb-1">Topic Of The Day: {topicOfDay}</p>
               </div>
 
               <div id="buttons" className="grid grid-cols-2 gap-2">

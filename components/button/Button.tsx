@@ -32,7 +32,7 @@ const Button = (props: ButtonProps) => {
       className={
         cssOvveride
           ? cssOvveride
-          : `${backgroundColor} text-center p-2 px-4 m-2 rounded-md min-w-32 cursor-pointer font-bold`
+          : `${backgroundColor} text-center p-4 px-6 m-2 rounded-md min-w-40 cursor-pointer font-bold`
       }
       onClick={handleClick}
     >

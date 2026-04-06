@@ -15,7 +15,7 @@ export default function Home() {
   const [timerExpired, setTimerExpired] = useState(false)
 
   const setRandomTopic = async () => {
-    const res = await axios.get('/api/topic')
+    const res = await axios.get('/api/topics/random')
     setTopic(res?.data?.topic?.name)
     setImage(res?.data?.topic?.image)
   }

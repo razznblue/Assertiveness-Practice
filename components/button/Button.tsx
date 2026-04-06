@@ -9,12 +9,15 @@ interface ButtonProps {
   disableLink: boolean
   cssOvveride?: string
   icon?: ReactNode
+  disabled?: boolean
 }
 
 const Button = (props: ButtonProps) => {
-  const { text, link, backgroundColor, clickFunction, disableLink, cssOvveride, icon } = props
+  const { text, link, backgroundColor, clickFunction, disableLink, cssOvveride, icon, disabled } =
+    props
 
   const handleClick = async () => {
+    if (disabled) return
     if (clickFunction) {
       await clickFunction()
     }

@@ -6,18 +6,19 @@ import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import axios from 'axios'
 import { generateRandomString, getInitials } from '@/util/functions'
+import { useRouter } from 'next/router'
 
 export default function NewSession() {
   const { data: session } = useSession()
+  const router = useRouter()
 
-  /* Hooks */
   const [userId, setUserId] = useState(null)
-
   const [sessionName, setSessionName] = useState('')
   const [topic, setTopic] = useState('')
+  const [topicId, setTopicId] = useState<string | null>(null) // track the id
   const [timer, setTimer] = useState(60)
-
   const [timerChecked, setTimerChekced] = useState(false)
+  const [isStarting, setIsStarting] = useState(false)
 
   const generateSessionName = () => {
     const randomString = generateRandomString(16)
@@ -28,17 +29,52 @@ export default function NewSession() {
   }
 
   const setRandomTopic = async () => {
-    const res = await axios.get('/api/topic')
+    const res = await axios.get('/api/topics/random')
     setTopic(res?.data?.topic?.name)
+    setTopicId(res?.data?.topic?._id)
   }
 
-  const createNewTopic = async () => {
-    if (topic && topic !== '') {
-      try {
-        await axios.post('/api/topics', { name: topic })
-      } catch (e) {
-        console.error('Server Side Error: ', e)
+  // Clear topicId whenever the user manually edits the topic name
+  // since it may no longer match what's in the DB
+  const handleTopicChange = (e: any) => {
+    setTopic(e?.target?.value)
+    setTopicId(null)
+  }
+
+  const resolveTopicId = async (): Promise<string | null> => {
+    if (!topic || topic === '') return null
+    if (topicId) return topicId
+
+    try {
+      // Try to create; if it already exists your API should return the existing doc
+      const res = await axios.post('/api/topics', { name: topic })
+      return res?.data?.topic._id ?? null
+    } catch (e) {
+      if (e?.response?.status === 409) {
+        // Topic exists — API now returns it under `topic`
+        return e?.response?.data?.topic?._id ?? null
       }
+      console.error('Failed to create/resolve topic:', e)
+      return null
+    }
+  }
+
+  const handleStartClick = async () => {
+    if (!sessionName) return
+    setIsStarting(true)
+
+    try {
+      const resolvedTopicId = await resolveTopicId()
+
+      const params = new URLSearchParams()
+      if (resolvedTopicId) params.set('topicId', resolvedTopicId)
+
+      // Navigate programmatically only after topic is resolved
+      await router.push(`/session/${encodeURIComponent(sessionName)}?${params.toString()}`)
+    } catch (e) {
+      console.error('Failed to start session:', e)
+    } finally {
+      setIsStarting(false)
     }
   }
 
@@ -55,10 +91,6 @@ export default function NewSession() {
     if (timerChecked && !Number.isNaN(timer) && userId) {
       await axios.patch(`/api/users/${userId}`, { settings: { defaultTimer: timer } })
     }
-  }
-
-  const handleStartClick = async () => {
-    await createNewTopic()
   }
 
   /* Fecth UserId */
@@ -109,7 +141,7 @@ export default function NewSession() {
                     <input
                       type="text"
                       value={topic}
-                      onChange={(e) => setTopic(e?.target?.value)}
+                      onChange={handleTopicChange}
                       className="bg-gray rounded-md w-1/2 text-black p-1 px-2"
                     />
                   </div>
@@ -152,11 +184,12 @@ export default function NewSession() {
                 disableLink={false}
               />
               <Button
-                text="Start"
-                link={`/session/${sessionName}`}
+                text={isStarting ? 'Starting...' : 'Start'}
+                link=""
+                disableLink={true}
                 backgroundColor="bg-primary"
                 clickFunction={handleStartClick}
-                disableLink={false}
+                disabled={isStarting || !sessionName}
               />
             </div>
           </>

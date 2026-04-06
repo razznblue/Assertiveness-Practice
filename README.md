@@ -15,7 +15,7 @@ Screenshots:
 <details>
 <summary>Development Docs</summary>
   ## Routes
-   - `/api/topic` - Returns a random topic from DB
+   - `/api/topics/random` - Returns a random topic from DB
    - `/api/process/names` - Processes any new names added to the list. Include an optional `size` parameter to specify the number of topics to process at a time. You can add a new name to the list [here](./data/topics.ts). More easier support for adding topics is on the way!
   
   ## Topics API

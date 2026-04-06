@@ -1,12 +1,27 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react/no-unescaped-entities */
 import Button from '@/components/button/Button'
-import { useState } from 'react'
-import { signIn, useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import Image from 'next/image'
+import axios from 'axios'
 
 export default function Home() {
   const { data: session } = useSession()
+
+  const [topicOfDay, setTopicOfDay] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const fetchTopic = async () => {
+      const res = await axios.get('/api/topics/random')
+      if (!cancelled) setTopicOfDay(res?.data?.topic?.name)
+    }
+    fetchTopic()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   /* JSX */
   return (
@@ -29,7 +44,7 @@ export default function Home() {
 
             <div id="bottom-content" className="flex flex-col items-center justify-evenly">
               <div id="topic-of-day" className="text-white text">
-                <p className="text-lg pb-4 mb-1">Topic Of The Day: Syrup</p>
+                <p className="text-lg pb-4 mb-1">Topic Of The Day: {topicOfDay}</p>
               </div>
 
               <div id="buttons" className="grid grid-cols-2 gap-2">

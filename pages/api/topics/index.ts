@@ -24,7 +24,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
     const existingTopic = await TopicModel.findOne({ name })
     if (existingTopic) {
-      return res.status(409).json({ error: 'Topic already exists', existingTopic })
+      return res.status(409).json({ error: 'Topic already exists', topic: existingTopic })
     }
 
     const unsplashURL = `https://api.unsplash.com/search/photos?query=${name}&client_id=${process.env.UNSPLASH_ACCESS_KEY}`

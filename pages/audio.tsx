@@ -1,10 +1,13 @@
 /* eslint-disable react/self-closing-comp */
 /* eslint-disable spaced-comment */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { useState, useRef, useEffect } from 'react'
 import clsx from 'clsx'
 
 import styles from '@/styles/Audio.module.css'
 import Button from '@/components/button/Button'
+import Image from 'next/image'
 
 const mimeType = 'audio/webm'
 
@@ -141,7 +144,7 @@ const AudioRecorder = ({
 
           {/* Image */}
           <div className={styles['ar-image-wrapper']}>
-            <img src={topicImage} alt={topic} />
+            <Image src={topicImage} alt={topic} />
             <div
               className={clsx(
                 styles['ar-image-overlay'],

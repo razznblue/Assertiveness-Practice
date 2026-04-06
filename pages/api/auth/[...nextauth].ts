@@ -39,20 +39,12 @@ export const authOptions = {
     async signIn(credentials: any) {
       try {
         // Set Up User Info
-        const user = credentials?.user
         const email = credentials?.user?.email
         const username = credentials?.user?.name
         const provider = credentials?.account?.provider?.toUpperCase()
         const providerId = credentials?.account?.providerAccountId
 
-        const apiBaseUrl = process.env.NEXTAUTH_URL
-
         await dbConnect()
-        console.log('DB connected, checking for user:', username)
-        // console.log(`${apiBaseUrl}/api/users?username=${username}&providerId=${providerId}`)
-        // const res = await axios.get(
-        //   `${apiBaseUrl}/api/users?username=${username}&providerId=${providerId}`
-        // )
         const existingUser = await UserModel.findOne({
           username,
           'provider.providerId': providerId,

@@ -9,8 +9,7 @@
     "start": "next start",
     "export": "next build && next export",
     "lint": "eslint --ignore-path .gitignore --fix",
-    "format": "prettier --ignore-path .gitignore \"pages/**/*.+(ts|js|tsx)\" --write",
-    "postinstall": "husky install"
+    "format": "prettier --ignore-path .gitignore \"pages/**/*.+(ts|js|tsx)\" --write"
   },
   "lint-staged": {
     "./**/*.{ts,js,jsx,tsx}": [
@@ -42,7 +41,6 @@
     "eslint": "8.48.0",
     "eslint-config-alloy": "5.1.1",
     "eslint-config-next": "13.4.19",
-    "husky": "8.0.3",
     "lint-staged": "14.0.1",
     "postcss": "8.4.28",
     "prettier": "3.0.2",

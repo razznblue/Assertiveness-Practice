@@ -144,7 +144,7 @@ const AudioRecorder = ({
 
           {/* Image */}
           <div className={styles['ar-image-wrapper']}>
-            <Image src={topicImage} alt={topic} />
+            <Image src={topicImage} alt={topic} width="800" height="400" />
             <div
               className={clsx(
                 styles['ar-image-overlay'],

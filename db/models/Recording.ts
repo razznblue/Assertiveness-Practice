@@ -6,9 +6,9 @@ import User from './User'
 @modelOptions({ schemaOptions: { collection: 'Recording', versionKey: false, timestamps: true } })
 class Recording {
   @prop({ required: true })
-  public recordingId: string
+  public recordingId: string // S3 Storage Key
 
-  @prop()
+  @prop({ required: true })
   public recordingUrl: string
 
   @prop({ ref: Session })
@@ -16,6 +16,12 @@ class Recording {
 
   @prop({ ref: User })
   public userId: typegoose.Ref<User>
+
+  @prop()
+  public duration: number
+
+  @prop()
+  public fileSize: number
 }
 
 export default Recording

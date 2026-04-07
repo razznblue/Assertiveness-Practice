@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import axios from 'axios'
 import topics from '@/data/topics'
-import Topic from '@/db/models/Topic'
+import { TopicModel } from '@/db/models'
 import dbConnect from '@/db/dbConnect'
 
 const getTopicImage = async (topic: string) => {
@@ -28,9 +28,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   let count = 0
   for (const topicName of topics) {
     if (count < size) {
-      const exists = await Topic.findOne({ name: topicName })
+      const exists = await TopicModel.findOne({ name: topicName })
       if (!exists) {
-        const newTopic = new Topic()
+        const newTopic = new TopicModel()
         newTopic.name = topicName
         newTopic.image = await getTopicImage(topicName)
         await newTopic.save()

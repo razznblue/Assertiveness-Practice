@@ -1,4 +1,5 @@
 # 🚀 Assertiveness Practice
+
 Many people struggle to speak up. In therapy, at work, in relationships, to themselves, or in any other situation. Assertiveness Practice is a free, open tool to help build that skill through low-pressure repetition. It gives you a random topic, a timer, and a space to just talk. You can do it alone or with a partner.
 
 A topic and image is shown to you on the [home page](https://assertiveness-training.vercel.app/). Talk about the topic for the selected amount of time. When the timer runs out, the app will automatically display a new one. You can do this by yourself or with a partner! The timer is also customizable!
@@ -11,12 +12,10 @@ Screenshots:
 <img width="1920" height="1080" alt="4" src="https://github.com/user-attachments/assets/c3587f65-bc3f-4dbc-be81-dd6f0f3e6c5f" />
 <img width="1920" height="1080" alt="5" src="https://github.com/user-attachments/assets/4759e7b4-b597-48a8-a25b-576f16627d0e" />
 
-
-    
 <details>
 <summary>Development Docs</summary>
   ## Routes
-   - `/api/topic` - Returns a random topic from DB
+   - `/api/topics/random` - Returns a random topic from DB
    - `/api/process/names` - Processes any new names added to the list. Include an optional `size` parameter to specify the number of topics to process at a time. You can add a new name to the list [here](./data/topics.ts). More easier support for adding topics is on the way!
   
   ## Topics API

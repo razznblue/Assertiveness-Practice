@@ -10,7 +10,9 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex flex-col h-screen mx-auto bg-[#0A192F]">
-      <nav className={`border-b border-[${lineColor}] py-5 relative z-20 bg-background shadow-[0_0_15px_0_rgb(0,0,0,0.1)]`}>
+      <nav
+        className={`border-b border-[${lineColor}] py-5 relative z-20 bg-background shadow-[0_0_15px_0_rgb(0,0,0,0.1)]`}
+      >
         <div className="flex items-center mx-auto lg:px-6 max-w-7xl px-14">
           <div className="flex flex-row items-center">
             <Link
@@ -37,7 +39,10 @@ export function Layout({ children }: { children: ReactNode }) {
                   <path d="M16.88 3.549L7.12 20.451" />
                 </svg>
               </li>
-              <li className="font-medium text-[#449E90]" style={{ letterSpacing: '.01px' }}>
+              <li
+                className="text-2xl font-medium text-[#449E90]"
+                style={{ letterSpacing: '.01px' }}
+              >
                 <a
                   className="text-link hover:text-link-light transition-colors no-underline [&_code]:text-link [&_code]:hover:text-link-light [&_code]:transition-colors text-accents-6 duration-200 hover:text-accents-8 cursor-pointer"
                   target="_blank"

@@ -1,3 +1,4 @@
+// Just to get started, can be used to seed a local database
 const topics: string[] = [
   'Cereal',
   'Friends',

@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/pages/api/auth/[...nextauth]'
 import dbConnect from '@/db/dbConnect'
 import { RecordingModel, SessionModel } from '@/db/models'
-import { throw404 } from '@/helpers/APIHelper'
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await dbConnect()

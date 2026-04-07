@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../auth/[...nextauth]'
 import dbConnect from '@/db/dbConnect'
 const ObjectId = require('mongoose').Types.ObjectId
 import { RecordingModel } from '@/db/models'
-import { handleUnexpectedError, throw404 } from '@/helpers/APIHelper'
+import { throw404 } from '@/helpers/APIHelper'
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await dbConnect()

@@ -43,14 +43,13 @@ export function Layout({ children }: { children: ReactNode }) {
                 className="text-2xl font-medium text-[#449E90]"
                 style={{ letterSpacing: '.01px' }}
               >
-                <a
+                <Link
                   className="text-link hover:text-link-light transition-colors no-underline [&_code]:text-link [&_code]:hover:text-link-light [&_code]:transition-colors text-accents-6 duration-200 hover:text-accents-8 cursor-pointer"
-                  target="_blank"
                   rel="noreferrer"
-                  href={process.env.NEXTAUTH_URL}
+                  href="/"
                 >
                   Assertiveness-Training
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

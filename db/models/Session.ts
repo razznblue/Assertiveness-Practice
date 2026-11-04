@@ -8,6 +8,12 @@ class Session {
   @prop({ required: true })
   public name: string
 
+  @prop({ required: false })
+  public topicName?: string
+
+  @prop({ required: false, default: 60 })
+  public timer?: number
+
   @prop({ ref: User })
   public userId: typegoose.Ref<User>
 }

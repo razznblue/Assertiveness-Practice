@@ -100,6 +100,20 @@ export const getSignedAudioUrl = async ({
   )
 }
 
+export const extractKeyFromUrl = (url: string) => {
+  if (!url) return null
+
+  try {
+    const parsed = new URL(url)
+    const pathname = decodeURIComponent(parsed.pathname)
+    const bucket = process.env.R2_BUCKET_NAME ? `/${process.env.R2_BUCKET_NAME}` : ''
+    const normalized = pathname.startsWith(bucket) ? pathname.slice(bucket.length) : pathname
+    return normalized.replace(/^\//, '') || null
+  } catch (error) {
+    return null
+  }
+}
+
 export const deleteAudioFromR2 = async (key: string) => {
   const { client, bucket } = getR2Config()
 

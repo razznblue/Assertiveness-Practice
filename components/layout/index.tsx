@@ -67,13 +67,13 @@ export function Layout({ children }: { children: ReactNode }) {
               </span>
               {session && (
                 <span className="text-[#449E90] flex items-center h-full ml-2 cursor-pointer text-accents-5">
-                  <a
+                  <Link
+                    href="/profile"
                     data-variant="primary"
                     className="relative inline-flex items-center justify-center cursor pointer no-underline px-3.5 rounded-md font-medium outline-0 select-none align-middle whitespace-nowrap transition-colors ease-in duration-200 border-[#dfdfdf] border-solid text-background bg-success border-success-dark hover:bg-success/90 shadow-[0_5px_10px_rgb(0,68,255,0.12)] h-10 leading-10 text-[18px]"
-                    rel="noreferrer"
                   >
                     Profile
-                  </a>
+                  </Link>
                 </span>
               )}
             </nav>

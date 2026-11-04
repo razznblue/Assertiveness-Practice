@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import axios from 'axios'
-import { generateRandomString, getInitials } from '@/util/functions'
 import { useRouter } from 'next/router'
 
 export default function NewSession() {
@@ -21,11 +20,22 @@ export default function NewSession() {
   const [isStarting, setIsStarting] = useState(false)
 
   const generateSessionName = () => {
-    const randomString = generateRandomString(16)
-    const initials = getInitials(session?.user?.name)
-    topic !== ''
-      ? setSessionName(`${initials}-${topic?.toLowerCase()}-${randomString}`)
-      : setSessionName(`${initials}-${randomString}`)
+    const baseTopic = (topic || 'Practice').replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
+    const cleanedTopic = baseTopic
+      .split(' ')
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
+
+    const adjectives = ['Bold', 'Calm', 'Confident', 'Focused', 'Strong', 'Steady', 'Clear', 'Brave']
+    const nounPool = ['Practice', 'Session', 'Focus', 'Reset', 'Response', 'Progress', 'Moment', 'Flow']
+
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)]
+    const noun = nounPool[Math.floor(Math.random() * nounPool.length)]
+    const finalTopic = cleanedTopic || noun
+
+    const displayName = `${adjective} ${finalTopic}`
+    setSessionName(displayName)
   }
 
   const setRandomTopic = async () => {
@@ -68,6 +78,7 @@ export default function NewSession() {
 
       const params = new URLSearchParams()
       if (resolvedTopicId) params.set('topicId', resolvedTopicId)
+      params.set('timer', String(timer))
 
       // Navigate programmatically only after topic is resolved
       await router.push(`/session/${encodeURIComponent(sessionName)}?${params.toString()}`)

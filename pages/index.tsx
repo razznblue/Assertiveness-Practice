@@ -50,14 +50,14 @@ export default function Home() {
               <div id="buttons" className="grid grid-cols-2 gap-2">
                 <Button
                   text="My Profile"
-                  link="/"
+                  link="/profile"
                   backgroundColor="bg-primary"
                   clickFunction={null}
                   disableLink={false}
                 />
                 <Button
                   text="My Progress"
-                  link="/"
+                  link="/profile"
                   backgroundColor="bg-primary"
                   clickFunction={null}
                   disableLink={false}

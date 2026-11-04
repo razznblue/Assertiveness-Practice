@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from 'react'
 import clsx from 'clsx'
 import styles from '@/styles/Audio.module.css'
 import Button from '@/components/button/Button'
+import Modal from '@/components/Modal'
 import Image from 'next/image'
 
 const mimeType = 'audio/webm'
@@ -55,6 +56,14 @@ const AudioRecorder = ({
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [recordingStatus])
+
+  useEffect(() => {
+    return () => {
+      if (audio && typeof URL.revokeObjectURL === 'function') {
+        URL.revokeObjectURL(audio)
+      }
+    }
+  }, [audio])
 
   const formatTime = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
@@ -106,6 +115,10 @@ const AudioRecorder = ({
 
   const handleAction = (action: SessionAction) => {
     setShowModal(false)
+    if (audio && typeof URL.revokeObjectURL === 'function') {
+      URL.revokeObjectURL(audio)
+    }
+
     if (action === 'save') {
       if (audioBlob && onSave) onSave(audioBlob)
     } else if (action === 'restart') {
@@ -278,101 +291,99 @@ const AudioRecorder = ({
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div
-          className={styles['ar-modal-backdrop']}
-          onClick={(e) => e.target === e.currentTarget && setShowModal(false)}
-        >
-          <div className={styles['ar-modal']}>
-            <div className={styles['ar-modal-icon']}>
-              <svg
-                width="26"
-                height="26"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#38bda4"
-                strokeWidth="2"
-              >
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className={styles['ar-modal-title']}>Session Complete</div>
-            <div className={styles['ar-modal-sub']}>
-              Great work on <strong style={{ color: '#e8e4dc' }}>{topic}</strong>. What would you
-              like to do with this recording?
-            </div>
-            {recordingTime > 0 && (
-              <div className={styles['ar-modal-duration']}>
-                <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
-                {formatTime(recordingTime)} recorded
-              </div>
-            )}
-            <div className={styles['ar-modal-actions']}>
-              <button
-                className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-primary'])}
-                onClick={() => handleAction('save')}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-                  <path d="M17 21v-8H7v8M7 3v5h8" />
-                </svg>
-                Save Session
-              </button>
-              <div className="ar-modal-divider" />
-              <button
-                className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-secondary'])}
-                onClick={() => handleAction('restart')}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Try Again — Same Topic
-              </button>
-              <button
-                className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-danger'])}
-                onClick={() => handleAction('home')}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                  <path d="M9 22V12h6v10" />
-                </svg>
-                Back to Home
-              </button>
-            </div>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title="Session Complete"
+        description={
+          <>
+            Great work on <strong style={{ color: '#e8e4dc' }}>{topic}</strong>. What would you like
+            to do with this recording?
+          </>
+        }
+        icon={
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#38bda4"
+            strokeWidth="2"
+          >
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        }
+      >
+        {recordingTime > 0 && (
+          <div className={styles['ar-modal-duration']}>
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+            {formatTime(recordingTime)} recorded
           </div>
+        )}
+        <div className={styles['ar-modal-actions']}>
+          <button
+            className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-primary'])}
+            onClick={() => handleAction('save')}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+              <path d="M17 21v-8H7v8M7 3v5h8" />
+            </svg>
+            Save Session
+          </button>
+          <div className="ar-modal-divider" />
+          <button
+            className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-secondary'])}
+            onClick={() => handleAction('restart')}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Try Again — Same Topic
+          </button>
+          <button
+            className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-danger'])}
+            onClick={() => handleAction('home')}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <path d="M9 22V12h6v10" />
+            </svg>
+            Back to Home
+          </button>
         </div>
-      )}
+      </Modal>
     </>
   )
 }

@@ -1,4 +1,4 @@
-# 🚀 Assertiveness Practice
+# 🚀 Assertiveness Training
 
 Many people struggle to speak up. In therapy, at work, in relationships, to themselves, or in any other situation. Assertiveness Practice is a free, open tool to help build that skill through low-pressure repetition. It gives you a random topic, a timer, and a space to just talk. You can do it alone or with a partner.
 

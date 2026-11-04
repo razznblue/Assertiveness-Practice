@@ -14,6 +14,7 @@ export default function SessionScreen() {
   const [topic, setTopic] = useState('')
   const [topicImage, setTopicImage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [pendingUploadKey, setPendingUploadKey] = useState<string | null>(null)
   const hasFetched = useRef(false)
 
   useEffect(() => {
@@ -35,17 +36,35 @@ export default function SessionScreen() {
     fetchTopic()
   }, [topicId])
 
+  const deletePendingUpload = async () => {
+    if (!pendingUploadKey) return
+
+    try {
+      await axios.delete('/api/sessions', {
+        params: { key: pendingUploadKey },
+      })
+    } catch (e) {
+      console.error('Failed to delete pending R2 upload:', e)
+    } finally {
+      setPendingUploadKey(null)
+    }
+  }
+
   const handleSave = async (audioBlob: Blob) => {
     try {
       const formData = new FormData()
       formData.append('audio', audioBlob, `${sessionName}.webm`)
       formData.append('sessionName', sessionName)
       formData.append('topicId', topicId)
-      formData.append('userId', session?.user?.name ?? '')
+      formData.append('username', session?.user?.name ?? '')
 
-      await axios.post('/api/sessions', formData, {
+      const res = await axios.post('/api/sessions', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
+
+      if (res?.data?.r2Key) {
+        setPendingUploadKey(res.data.r2Key)
+      }
 
       router.push('/')
     } catch (e) {
@@ -53,11 +72,13 @@ export default function SessionScreen() {
     }
   }
 
-  const handleRestart = () => {
+  const handleRestart = async () => {
+    await deletePendingUpload()
     router.push('/session/new')
   }
 
-  const handleHome = () => {
+  const handleHome = async () => {
+    await deletePendingUpload()
     router.push('/')
   }
 

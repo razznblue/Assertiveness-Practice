@@ -56,6 +56,14 @@ const AudioRecorder = ({
     }
   }, [recordingStatus])
 
+  useEffect(() => {
+    return () => {
+      if (audio && typeof URL.revokeObjectURL === 'function') {
+        URL.revokeObjectURL(audio)
+      }
+    }
+  }, [audio])
+
   const formatTime = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
@@ -106,6 +114,10 @@ const AudioRecorder = ({
 
   const handleAction = (action: SessionAction) => {
     setShowModal(false)
+    if (audio && typeof URL.revokeObjectURL === 'function') {
+      URL.revokeObjectURL(audio)
+    }
+
     if (action === 'save') {
       if (audioBlob && onSave) onSave(audioBlob)
     } else if (action === 'restart') {

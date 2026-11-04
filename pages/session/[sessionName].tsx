@@ -64,7 +64,8 @@ export default function SessionScreen() {
       formData.append('timer', String(timer))
       formData.append('username', session?.user?.name ?? '')
 
-      const res = await axios.post('/api/sessions', formData, {
+      // TODO add a loading state to show progress of session being saved
+      await axios.post('/api/sessions', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 

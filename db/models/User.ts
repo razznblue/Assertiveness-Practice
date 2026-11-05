@@ -1,7 +1,7 @@
 import { modelOptions, prop } from '@typegoose/typegoose'
 import { defaultAvatarImg } from '@/util/constants'
 
-@modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false } })
+@modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false },  options: { customName: 'UserProvider' } })
 export class UserProvider {
   @prop()
   public name?: string
@@ -10,7 +10,7 @@ export class UserProvider {
   public providerId?: string
 }
 
-@modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false } })
+@modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false },  options: { customName: 'UserSettings' } })
 export class UserSettings {
   @prop()
   public defaultTimer?: number
@@ -19,7 +19,7 @@ export class UserSettings {
   public autofillSessionName?: boolean
 }
 
-@modelOptions({ schemaOptions: { collection: 'User', versionKey: false, timestamps: true } })
+@modelOptions({ schemaOptions: { collection: 'User', versionKey: false, timestamps: true },  options: { customName: 'User' } })
 class User {
   @prop({ required: true })
   public username: string

@@ -3,7 +3,16 @@ import { modelOptions, prop } from '@typegoose/typegoose'
 import Session from './Session'
 import User from './User'
 
-@modelOptions({ schemaOptions: { collection: 'Recording', versionKey: false, timestamps: true } })
+@modelOptions({
+  schemaOptions: {
+    collection: 'Recording',
+    versionKey: false,
+    timestamps: true,
+  },
+  options: {
+    customName: 'Recording',
+  },
+})
 class Recording {
   @prop({ required: true })
   public recordingId: string // S3 Storage Key

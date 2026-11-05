@@ -4,7 +4,16 @@ import { modelOptions, prop } from '@typegoose/typegoose'
 import User from './User'
 import Topic from './Topic'
 
-@modelOptions({ schemaOptions: { collection: 'Session', versionKey: false, timestamps: true } })
+@modelOptions({
+  schemaOptions: {
+    collection: 'Session',
+    versionKey: false,
+    timestamps: true,
+  },
+  options: {
+    customName: 'Session',
+  },
+})
 class Session {
   @prop({ required: true, trim: true })
   public name: string

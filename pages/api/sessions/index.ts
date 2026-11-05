@@ -270,6 +270,21 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
 
       try {
         await mongoSession.withTransaction(async () => {
+
+        console.log('SESSION MODEL DIAGNOSTICS:', {
+          modelName: SessionModel.modelName,
+          collectionName: SessionModel.collection.name,
+          schemaPaths: Object.keys(SessionModel.schema.paths),
+          documentName: sessionDoc.name,
+          document: sessionDoc.toObject(),
+        })
+
+        console.log('RECORDING MODEL DIAGNOSTICS:', {
+          modelName: RecordingModel.modelName,
+          collectionName: RecordingModel.collection.name,
+          schemaPaths: Object.keys(RecordingModel.schema.paths),
+        })
+
           await sessionDoc.save({ session: mongoSession })
           savedSessionId = String(sessionDoc._id)
 

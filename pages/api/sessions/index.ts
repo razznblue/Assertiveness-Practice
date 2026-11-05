@@ -181,7 +181,8 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
       return res.status(400).json({ error: 'Audio file is required.' })
     }
 
-    const sessionName = getFieldValue(fields.sessionName)
+    const sessionNameInput = getFieldValue(fields.sessionName)
+    const sessionName = sessionNameInput.trim()
     const username = getFieldValue(fields.username) || getFieldValue(fields.userId)
     const topicId = getFieldValue(fields.topicId)
     const topicName = getFieldValue(fields.topicName)
@@ -189,7 +190,10 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
     const timer = Number.isFinite(timerValue) && timerValue > 0 ? timerValue : 60
 
     if (!sessionName) {
-      return res.status(400).json({ error: 'Session name is required.' })
+      return res.status(400).json({
+        error: 'Session name is required.',
+        received: sessionNameInput,
+      })
     }
 
     if (!username) {

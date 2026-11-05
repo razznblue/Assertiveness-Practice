@@ -1,15 +1,4 @@
-import { ReactNode } from 'react'
-
-interface ButtonProps {
-  text: string
-  link: string
-  backgroundColor?: string
-  clickFunction?: (() => void | Promise<void>) | null
-  disableLink: boolean
-  cssOvveride?: string
-  icon?: ReactNode
-  disabled?: boolean
-}
+import type { ButtonProps } from '@/types'
 
 const Button = (props: ButtonProps) => {
   const { text, link, backgroundColor, clickFunction, disableLink, cssOvveride, icon, disabled } =

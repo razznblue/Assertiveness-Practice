@@ -5,6 +5,8 @@ import Modal from '@/components/Modal'
 import axios from 'axios'
 import { useEffect, useState, useRef } from 'react'
 
+import { CheckIcon } from '@/components/Icons'
+
 export default function SessionScreen() {
   const router = useRouter()
   const { data: session } = useSession()
@@ -70,7 +72,6 @@ export default function SessionScreen() {
       formData.append('timer', String(timer))
       formData.append('username', session?.user?.name ?? '')
 
-      // TODO add a loading state to show progress of session being saved
       await axios.post('/api/sessions', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
@@ -99,7 +100,7 @@ export default function SessionScreen() {
   }
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-screen text-white">Loading...</div>
+    return <div className="flex h-screen items-center justify-center text-white">Loading...</div>
   }
 
   return (
@@ -118,18 +119,7 @@ export default function SessionScreen() {
         onClose={handleSuccessClose}
         title="Session Saved"
         description="Your recording was saved successfully and added to your progress history."
-        icon={
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#38bda4"
-            strokeWidth="2"
-          >
-            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        }
+        icon={<CheckIcon size={26} style={{ stroke: '#38bda4' }} />}
         primaryButtonText="Back to Home"
         onPrimaryClick={handleSuccessClose}
       />

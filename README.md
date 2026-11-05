@@ -6,10 +6,9 @@ A topic and image is shown to you on the [home page](https://assertiveness-train
 
 # Try it Out Today!
 
-[Assertiveness-Training](https://assertiveness-training.vercel.app/)
+---> [Assertiveness-Training](https://assertiveness-training.vercel.app/)
 
-<details>
-<summary>Development Docs</summary>
+# Development Docs
   
   ## API Routes
 
@@ -49,7 +48,6 @@ A topic and image is shown to you on the [home page](https://assertiveness-train
    - Rate your session
    - Building out the rest of the tabs on the profile page
    - Avatar Images
-</details>
 
 ## Screenshots:
 

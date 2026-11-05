@@ -249,6 +249,17 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
         sessionDoc.topicId = topicId as unknown as typeof sessionDoc.topicId
       }
 
+      console.log('Before session save:', {
+        sessionName,
+        normalizedSessionName: normalizeSessionName(sessionName),
+        rawSessionName: sessionNameInput,
+        topicId,
+        timer,
+        userId: String(user._id),
+        username,
+        topicName,
+      })
+
       sessionDoc.timer = timer
       sessionDoc.duration = timer
       sessionDoc.name = sessionName
@@ -350,14 +361,6 @@ async function handleJsonSessionCreate(req: NextApiRequest, res: NextApiResponse
 
   try {
     const sessionDuration = Number(duration ?? timer ?? 60)
-
-    console.log('Attempting to create new session:', {
-      name: normalizedName,
-      userId,
-      topicId,
-      topicName,
-      duration: sessionDuration,
-    })
 
     const newSession = new SessionModel({
       name: normalizedName,

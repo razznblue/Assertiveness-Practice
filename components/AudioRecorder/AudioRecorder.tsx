@@ -1,23 +1,21 @@
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
-import styles from '@/styles/Audio.module.css'
-import Button from '@/components/button/Button'
+
+import Button from '@/components/Button/Button'
 import Modal from '@/components/Modal'
-import Image from 'next/image'
+import { BackArrowIcon, CheckIcon, ClockIcon, HomeIcon, MicIcon, ResetIcon, SaveIcon } from '@/components/Icons'
+import type { AudioRecorderProps, SessionAction, RecordingStatus } from '@/types'
+import styles from '@/styles/Audio.module.css'
+import {
+  AudioPlayback,
+  RecorderArtwork,
+  RecorderHeader,
+  ReviewSessionButton,
+  StartRecordingButton,
+  StopRecordingButton,
+} from './RecorderParts'
 
 const mimeType = 'audio/webm'
-
-type RecordingStatus = 'inactive' | 'recording' | 'stopped'
-type SessionAction = 'save' | 'restart' | 'home'
-
-interface AudioRecorderProps {
-  topic?: string
-  topicImage?: string
-  sessionName?: string
-  onSave?: (audioBlob: Blob) => void
-  onRestart?: () => void
-  onHome?: () => void
-}
 
 const AudioRecorder = ({
   topic = 'Notebook',
@@ -100,8 +98,8 @@ const AudioRecorder = ({
     mediaRecorder.current.start()
 
     const localChunks: Blob[] = []
-    mediaRecorder.current.ondataavailable = (e) => {
-      if (e.data?.size > 0) localChunks.push(e.data)
+    mediaRecorder.current.ondataavailable = (event) => {
+      if (event.data?.size > 0) localChunks.push(event.data)
     }
     setAudioChunks(localChunks)
   }
@@ -133,70 +131,27 @@ const AudioRecorder = ({
       setRecordingTime(0)
       setRecordingStatus('inactive')
       if (onRestart) onRestart()
-    } else {
-      if (onHome) onHome()
+    } else if (onHome) {
+      onHome()
     }
   }
 
   return (
     <>
       <div className={styles['ar-root']}>
-        {/* Main */}
         <main className={styles['ar-main']}>
-          {/* Topic header */}
-          <div className={styles['ar-topic-header']}>
-            <svg
-              className={styles['ar-topic-icon']}
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            >
-              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <h1 className={styles['ar-topic-name']}>{topic}</h1>
-            <span className={styles['ar-session-badge']}>{sessionName}</span>
-          </div>
+          <RecorderHeader topic={topic} sessionName={sessionName} />
 
-          {/* Image */}
-          <div className={styles['ar-image-wrapper']}>
-            <Image loading='eager' src={topicImage} alt={topic} width="800" height="400" />
-            <div
-              className={clsx(
-                styles['ar-image-overlay'],
-                recordingStatus === 'recording' && styles.visible
-              )}
-            >
-              <div className={styles['ar-recording-indicator']}>
-                <div className={styles['ar-rec-dot']} />
-                <span className={styles['ar-rec-label']}>Recording</span>
-                <span className={styles['ar-rec-time']}>{formatTime(recordingTime)}</span>
-              </div>
-            </div>
-          </div>
+          <RecorderArtwork
+            topic={topic}
+            topicImage={topicImage}
+            recordingStatus={recordingStatus}
+            recordingTime={recordingTime}
+            formatTime={formatTime}
+          />
 
-          {/* Audio playback */}
-          {audio && recordingStatus === 'stopped' && (
-            <div className={styles['ar-audio-bar']}>
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#38bda4"
-                strokeWidth="2"
-              >
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-              </svg>
-              <audio ref={audioRef} src={audio} controls />
-            </div>
-          )}
+          {audio && recordingStatus === 'stopped' && <AudioPlayback audio={audio} audioRef={audioRef} />}
 
-          {/* Bottom bar */}
           <div className={styles['ar-bottom']}>
             <Button
               text="Back"
@@ -205,21 +160,9 @@ const AudioRecorder = ({
               clickFunction={null}
               disableLink={false}
               cssOvveride={clsx(styles['ar-btn'], styles['ar-btn-ghost'])}
-              icon={
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-              }
+              icon={<BackArrowIcon size={16} />}
             />
 
-            {/* Center action */}
             {!permission && recordingStatus === 'inactive' && (
               <Button
                 text="Enable Mic"
@@ -227,76 +170,26 @@ const AudioRecorder = ({
                 clickFunction={getMicrophonePermission}
                 disableLink={true}
                 cssOvveride={clsx(styles['ar-btn'], styles['ar-btn-record'])}
-                icon={
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
-                  </svg>
-                }
+                icon={<MicIcon size={18} />}
               />
             )}
             {permission && recordingStatus === 'inactive' && (
-              <button
-                className={clsx(styles['ar-btn'], styles['ar-btn-record'])}
-                onClick={startRecording}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
-                </svg>
-                Start Recording
-              </button>
+              <StartRecordingButton onClick={startRecording} />
             )}
             {recordingStatus === 'recording' && (
-              <button
-                className={clsx(styles['ar-btn'], styles['ar-btn-stop'])}
-                onClick={stopRecording}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <rect x="6" y="6" width="12" height="12" rx="2" />
-                </svg>
-                Stop Recording
-              </button>
+              <StopRecordingButton onClick={stopRecording} />
             )}
             {recordingStatus === 'stopped' && (
-              <button
-                className={clsx(styles['ar-btn'], styles['ar-btn-record'])}
-                onClick={() => setShowModal(true)}
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Review Session
-              </button>
+              <ReviewSessionButton onClick={() => setShowModal(true)} />
             )}
 
-            <button className={clsx(styles['ar-btn'], styles['ar-btn-danger'])}>End Session</button>
+            <button type="button" className={clsx(styles['ar-btn'], styles['ar-btn-danger'])}>
+              End Session
+            </button>
           </div>
         </main>
       </div>
 
-      {/* Modal */}
       <Modal
         open={showModal}
         onClose={() => setShowModal(false)}
@@ -307,85 +200,38 @@ const AudioRecorder = ({
             to do with this recording?
           </>
         }
-        icon={
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#38bda4"
-            strokeWidth="2"
-          >
-            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        }
+        icon={<CheckIcon size={26} style={{ stroke: '#38bda4' }} />}
       >
         {recordingTime > 0 && (
           <div className={styles['ar-modal-duration']}>
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" />
-            </svg>
+            <ClockIcon size={13} />
             {formatTime(recordingTime)} recorded
           </div>
         )}
         <div className={styles['ar-modal-actions']}>
           <button
+            type="button"
             className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-primary'])}
             onClick={() => handleAction('save')}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-              <path d="M17 21v-8H7v8M7 3v5h8" />
-            </svg>
+            <SaveIcon size={16} />
             Save Session
           </button>
           <div className="ar-modal-divider" />
           <button
+            type="button"
             className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-secondary'])}
             onClick={() => handleAction('restart')}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
+            <ResetIcon size={16} />
             Try Again — Same Topic
           </button>
           <button
+            type="button"
             className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-danger'])}
             onClick={() => handleAction('home')}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-              <path d="M9 22V12h6v10" />
-            </svg>
+            <HomeIcon size={16} />
             Back to Home
           </button>
         </div>

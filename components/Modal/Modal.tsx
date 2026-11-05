@@ -1,21 +1,8 @@
 import { ReactNode } from 'react'
 import clsx from 'clsx'
-import styles from '@/styles/Audio.module.css'
 
-interface ModalProps {
-  open: boolean
-  onClose?: () => void
-  title?: string
-  description?: ReactNode
-  icon?: ReactNode
-  children?: ReactNode
-  primaryButtonText?: string
-  secondaryButtonText?: string
-  onPrimaryClick?: () => void
-  onSecondaryClick?: () => void
-  primaryButtonClassName?: string
-  secondaryButtonClassName?: string
-}
+import type { ModalProps } from '@/types'
+import styles from '@/styles/Audio.module.css'
 
 export default function Modal({
   open,

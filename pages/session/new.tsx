@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react/no-unescaped-entities */
 import Button from '@/components/button/Button'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ChangeEvent } from 'react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import axios from 'axios'
@@ -11,10 +9,10 @@ export default function NewSession() {
   const { data: session } = useSession()
   const router = useRouter()
 
-  const [userId, setUserId] = useState(null)
+  const [userId, setUserId] = useState<string | null>(null)
   const [sessionName, setSessionName] = useState('')
   const [topic, setTopic] = useState('')
-  const [topicId, setTopicId] = useState<string | null>(null) // track the id
+  const [topicId, setTopicId] = useState<string | null>(null)
   const [timer, setTimer] = useState(60)
   const [timerChecked, setTimerChekced] = useState(false)
   const [isStarting, setIsStarting] = useState(false)
@@ -46,8 +44,8 @@ export default function NewSession() {
 
   // Clear topicId whenever the user manually edits the topic name
   // since it may no longer match what's in the DB
-  const handleTopicChange = (e: any) => {
-    setTopic(e?.target?.value)
+  const handleTopicChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setTopic(e.target.value)
     setTopicId(null)
   }
 
@@ -89,17 +87,19 @@ export default function NewSession() {
     }
   }
 
-  const handleTimerChange = async (e) => {
-    setTimer(Number.isNaN(e?.target?.valueAsNumber) ? '' : e?.target?.valueAsNumber)
-    const newTimer = Number.isNaN(e?.target?.valueAsNumber) ? '' : e?.target?.valueAsNumber
-    if (timerChecked && newTimer !== '') {
-      await axios.patch(`/api/users/${userId}`, { settings: { defaultTimer: newTimer } })
+  const handleTimerChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const nextTimer = Number.isFinite(e.target.valueAsNumber) ? e.target.valueAsNumber : 60
+    setTimer(nextTimer)
+
+    if (timerChecked && userId) {
+      await axios.patch(`/api/users/${userId}`, { settings: { defaultTimer: nextTimer } })
     }
   }
 
-  const updateTimerPreference = async (e) => {
-    setTimerChekced(e?.target?.checked)
-    if (timerChecked && !Number.isNaN(timer) && userId) {
+  const updateTimerPreference = async (e: ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked
+    setTimerChekced(checked)
+    if (checked && !Number.isNaN(timer) && userId) {
       await axios.patch(`/api/users/${userId}`, { settings: { defaultTimer: timer } })
     }
   }
@@ -122,7 +122,7 @@ export default function NewSession() {
         {!session ? (
           <>
             <p className="text-white p-3 m-2 text-4xl text-center">Sign In to start practicing!</p>
-            <Image src="/images/logo.webp" alt="" height="500" width="500" />
+            <Image loading='eager' src="/images/logo.webp" alt="" height="500" width="500" />
           </>
         ) : (
           <>

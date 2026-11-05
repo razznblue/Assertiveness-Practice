@@ -36,7 +36,10 @@ export const authOptions = {
     },
 
     /* This code is called after a user chooses a gmail to log in with */
-    async signIn(credentials: any) {
+    async signIn(credentials?: {
+      user?: { email?: string | null; name?: string | null }
+      account?: { provider?: string; providerAccountId?: string | null }
+    }) {
       try {
         // Set Up User Info
         const email = credentials?.user?.email

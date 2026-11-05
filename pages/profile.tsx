@@ -46,6 +46,23 @@ interface HistoryItem {
   }
 }
 
+interface HistorySession {
+  _id: string
+  name: string
+  createdAt: string
+  userId?: string
+  topicName?: string
+  timer?: number
+  recordingUrl?: string
+}
+
+interface HistoryRecording {
+  _id?: string
+  sessionId?: string
+  userId?: string
+  recordingUrl?: string
+}
+
 export default function ProfilePage() {
   const { data: session } = useSession()
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Progress')
@@ -67,8 +84,8 @@ export default function ProfilePage() {
         const sessions = res?.data?.sessions ?? []
         const recordings = res?.data?.recordings ?? []
 
-        const mergedHistory = sessions.map((item: any) => {
-          const matchingRecording = recordings.find((recording: any) => {
+        const mergedHistory = sessions.map((item: HistorySession) => {
+          const matchingRecording = recordings.find((recording: HistoryRecording) => {
             const itemSessionId = String(item?._id ?? '')
             const recordingSessionId = String(recording?.sessionId ?? '')
             const recordingUserId = String(recording?.userId ?? '')

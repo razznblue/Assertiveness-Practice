@@ -39,7 +39,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     const existingPlayer = await UserModel.exists({ username: username, email: email })
     if (!existingPlayer) {
       try {
-        const player: any = new UserModel({
+        const player = new UserModel({
           username: username,
           email: email,
           provider: provider,

@@ -18,8 +18,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const isAdmin = session.user.role === 'admin'
 
   try {
-    const id: any = req.query.sessionId
-    if (!ObjectId.isValid(id)) {
+    const id = Array.isArray(req.query.sessionId) ? req.query.sessionId[0] : req.query.sessionId
+    if (!id || !ObjectId.isValid(id)) {
       return res.status(400).json({ error: 'Invalid ObjectID' })
     }
 
@@ -43,12 +43,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     } else if (req.method === 'PATCH') {
       try {
         const allowedFields = ['name', 'duration', 'status', 'attemptCount']
+        const updates = (req.body ?? {}) as Record<string, unknown>
 
-        for (const [key, value] of Object.entries(req.body as Record<string, any>)) {
+        const targetSessionRecord = targetSession as unknown as Record<string, unknown>
+
+        for (const [key, value] of Object.entries(updates)) {
           if (!allowedFields.includes(key)) {
             return res.status(400).json({ error: `Field "${key}" cannot be updated` })
           }
-          targetSession[key] = value
+          targetSessionRecord[key] = value
         }
 
         await targetSession.save()
@@ -67,7 +70,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     } else {
       return res.status(405).json({ error: 'Method Not Allowed' })
     }
-  } catch (err) {
+  } catch {
     return res.status(500).json({ error: 'Unknown Error Occurred' })
   }
 }

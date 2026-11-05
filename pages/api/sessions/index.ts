@@ -24,10 +24,16 @@ const getFieldValue = (value: string | string[] | undefined) => {
   return value ?? ''
 }
 
-const getSignedRecordings = async (recordings: any[]) =>
+type RecordingWithUrl = {
+  recordingUrl?: string
+  [key: string]: unknown
+}
+
+const getSignedRecordings = async <T extends RecordingWithUrl>(recordings: T[]) =>
   Promise.all(
-    recordings.map(async (recording: any) => {
-      const key = extractKeyFromUrl(recording.recordingUrl)
+    recordings.map(async (recording) => {
+      const recordingUrl = recording.recordingUrl
+      const key = recordingUrl ? extractKeyFromUrl(recordingUrl) : null
       if (!key) {
         return recording
       }
@@ -44,7 +50,11 @@ const getSignedRecordings = async (recordings: any[]) =>
     })
   )
 
-async function handleGetSessions(req: NextApiRequest, res: NextApiResponse, session: any) {
+async function handleGetSessions(
+  req: NextApiRequest,
+  res: NextApiResponse,
+  session: { user?: { role?: string; name?: string } } | null | undefined
+) {
   const isAdmin = Boolean(session?.user?.role === 'admin')
   const sessionUsername = session?.user?.name ?? ''
 
@@ -88,16 +98,17 @@ async function handleDeleteRecording(req: NextApiRequest, res: NextApiResponse) 
 
   try {
     let objectKey = key
-    let recordingToDelete: any = null
+    let recordingToDelete: Record<string, unknown> | null = null
 
     if (recordingId) {
-      recordingToDelete = await RecordingModel.findById(recordingId)
-      if (recordingToDelete?.recordingUrl) {
-        objectKey = extractKeyFromUrl(recordingToDelete.recordingUrl) || objectKey
+      recordingToDelete = (await RecordingModel.findById(recordingId)) as Record<string, unknown> | null
+      const recordingUrl = typeof recordingToDelete?.recordingUrl === 'string' ? recordingToDelete.recordingUrl : ''
+      if (recordingUrl) {
+        objectKey = extractKeyFromUrl(recordingUrl) || objectKey
       }
     }
 
-    if (!objectKey && recordingToDelete?.recordingUrl) {
+    if (!objectKey && recordingToDelete && typeof recordingToDelete.recordingUrl === 'string') {
       objectKey = extractKeyFromUrl(recordingToDelete.recordingUrl)
     }
 
@@ -110,9 +121,12 @@ async function handleDeleteRecording(req: NextApiRequest, res: NextApiResponse) 
     }
 
     if (recordingId) {
-      const deletedRecording = recordingToDelete ?? (await RecordingModel.findById(recordingId).lean())
+      const deletedRecording =
+        recordingToDelete ?? ((await RecordingModel.findById(recordingId).lean()) as Record<string, unknown> | null)
       await RecordingModel.findByIdAndDelete(recordingId)
-      const sessionForRecording = deletedRecording?.sessionId ? String(deletedRecording.sessionId) : sessionId
+      const sessionForRecording = deletedRecording && typeof deletedRecording.sessionId !== 'undefined'
+        ? String(deletedRecording.sessionId)
+        : sessionId
 
       if (sessionForRecording) {
         await RecordingModel.deleteMany({ sessionId: sessionForRecording })
@@ -196,7 +210,7 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
         sessionDoc.topicName = topicName
       }
       if (topicId) {
-        sessionDoc.topicId = topicId as any
+        sessionDoc.topicId = topicId as unknown as typeof sessionDoc.topicId
       }
 
       sessionDoc.timer = timer
@@ -285,7 +299,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
-  const isAdmin = Boolean((session as any)?.user?.role === 'admin')
+  const isAdmin = Boolean(session?.user?.role === 'admin')
 
   switch (req.method) {
     case 'GET':

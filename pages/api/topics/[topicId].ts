@@ -8,8 +8,8 @@ import { throw404 } from '@/helpers/APIHelper'
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await dbConnect()
 
-  const id: any = req?.query?.topicId
-  if (!ObjectId.isValid(id)) {
+  const id = Array.isArray(req?.query?.topicId) ? req.query.topicId[0] : req?.query?.topicId
+  if (!id || !ObjectId.isValid(id)) {
     return res.status(400).send(`Invalid ObjectID`)
   }
 

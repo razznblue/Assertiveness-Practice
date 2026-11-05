@@ -1,11 +1,10 @@
 import { ReactNode } from 'react'
 
-/* eslint-disable no-param-reassign */
 interface ButtonProps {
   text: string
   link: string
   backgroundColor?: string
-  clickFunction: () => {}
+  clickFunction?: (() => void | Promise<void>) | null
   disableLink: boolean
   cssOvveride?: string
   icon?: ReactNode

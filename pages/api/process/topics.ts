@@ -14,8 +14,8 @@ const getTopicImage = async (topic: string) => {
     } else {
       return console.error('Could not find image on unsplash response', res?.data)
     }
-  } catch (err: any) {
-    return console.error(`Error retrieving image for topic ${topic}`, err)
+  } catch (error) {
+    return console.error(`Error retrieving image for topic ${topic}`, error)
   }
 }
 

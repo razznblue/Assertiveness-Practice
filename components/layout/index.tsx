@@ -20,7 +20,7 @@ export function Layout({ children }: { children: ReactNode }) {
               href="/"
             >
               <span>
-                <Image src="/images/logo.webp" alt="" height="40" width="40" />
+                <Image loading='eager' src="/images/logo.webp" alt="" height="40" width="40" />
               </span>
             </Link>
             <ul className="flex items-center content-center">

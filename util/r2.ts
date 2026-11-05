@@ -109,7 +109,7 @@ export const extractKeyFromUrl = (url: string) => {
     const bucket = process.env.R2_BUCKET_NAME ? `/${process.env.R2_BUCKET_NAME}` : ''
     const normalized = pathname.startsWith(bucket) ? pathname.slice(bucket.length) : pathname
     return normalized.replace(/^\//, '') || null
-  } catch (error) {
+  } catch {
     return null
   }
 }

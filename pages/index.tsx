@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react/no-unescaped-entities */
 import Button from '@/components/button/Button'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
@@ -9,7 +7,7 @@ import axios from 'axios'
 export default function Home() {
   const { data: session } = useSession()
 
-  const [topicOfDay, setTopicOfDay] = useState(null)
+  const [topicOfDay, setTopicOfDay] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -30,15 +28,15 @@ export default function Home() {
         {!session ? (
           <>
             <p className="text-white p-3 m-2 text-4xl text-center">Sign In to start practicing!</p>
-            <Image src="/images/logo.webp" alt="" height="500" width="500" />
+            <Image loading='eager' src="/images/logo.webp" alt="" height="500" width="500" />
           </>
         ) : (
           <>
             <div id="top-content" className="flex flex-col items-center">
               <h1 className="text-primary text-3xl font-bold">Hello {session?.user?.name}!</h1>
               <p className="text-white p-3 m-2 text-lg w-1/2 text-center">
-                "Being passive gets you nowhere. Being aggressive gets you noticed. Being assertive
-                gets you respect." - Steve Maraboli
+                &ldquo;Being passive gets you nowhere. Being aggressive gets you noticed. Being
+                assertive gets you respect.&rdquo; - Steve Maraboli
               </p>
             </div>
 

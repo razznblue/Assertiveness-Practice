@@ -1,7 +1,3 @@
-/* eslint-disable react/self-closing-comp */
-/* eslint-disable spaced-comment */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { useState, useRef, useEffect } from 'react'
 import clsx from 'clsx'
 import styles from '@/styles/Audio.module.css'
@@ -27,9 +23,9 @@ const AudioRecorder = ({
   topic = 'Notebook',
   topicImage = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80',
   sessionName = 'JanSession-1',
-  onSave, // saves the AudioBlob to storage and the record to the database
-  onRestart, // closes the current session and start a new session
-  onHome, // closes the current session and go to the home page
+  onSave,
+  onRestart,
+  onHome,
 }: AudioRecorderProps) => {
   const [permission, setPermission] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
@@ -40,20 +36,25 @@ const AudioRecorder = ({
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
-  const [pulseActive, setPulseActive] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
-    if (recordingStatus === 'recording') {
-      setPulseActive(true)
-      timerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000)
-    } else {
-      setPulseActive(false)
-      if (timerRef.current) clearInterval(timerRef.current)
+    if (recordingStatus !== 'recording') {
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
+      return
     }
+
+    timerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000)
+
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
     }
   }, [recordingStatus])
 
@@ -74,12 +75,17 @@ const AudioRecorder = ({
         const streamData = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
         setPermission(true)
         setStream(streamData)
-      } catch (err: any) {
-        alert(err.message)
+      } catch (error) {
+        if (error instanceof Error) {
+          alert(error.message)
+          return
+        }
+        alert('Unable to access microphone permission.')
       }
-    } else {
-      alert('MediaRecorder API is not supported in your browser.')
+      return
     }
+
+    alert('MediaRecorder API is not supported in your browser.')
   }
 
   const startRecording = async () => {
@@ -156,7 +162,7 @@ const AudioRecorder = ({
 
           {/* Image */}
           <div className={styles['ar-image-wrapper']}>
-            <Image src={topicImage} alt={topic} width="800" height="400" />
+            <Image loading='eager' src={topicImage} alt={topic} width="800" height="400" />
             <div
               className={clsx(
                 styles['ar-image-overlay'],

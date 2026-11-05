@@ -1,12 +1,17 @@
 import _mongoose, { connect } from 'mongoose'
 
-declare global {
-  const mongoose: {
-    promise: ReturnType<typeof connect> | null
-    conn: typeof _mongoose | null
-  }
+type MongooseCache = {
+  promise: ReturnType<typeof connect> | null
+  conn: typeof _mongoose | null
 }
-const globalAny: any = global
+
+declare global {
+  var mongoose: MongooseCache | undefined
+}
+
+const globalWithMongoose = globalThis as typeof globalThis & {
+  mongoose?: MongooseCache
+}
 
 const MONGODB_URI = process.env.MONGO_URI
 if (!MONGODB_URI) {
@@ -18,9 +23,9 @@ if (!MONGODB_URI) {
  * in development. This prevents connections from growing exponentially
  * during API Route usage.
  */
-let cached = globalAny.mongoose
+let cached = globalWithMongoose.mongoose
 if (!cached) {
-  cached = globalAny.mongoose = { conn: null, promise: null }
+  cached = globalWithMongoose.mongoose = { conn: null, promise: null }
 }
 
 async function dbConnect() {
@@ -40,9 +45,9 @@ async function dbConnect() {
 
   try {
     cached.conn = await cached.promise
-  } catch (e) {
+  } catch (error) {
     cached.promise = null
-    throw e
+    throw error
   }
 
   return cached.conn

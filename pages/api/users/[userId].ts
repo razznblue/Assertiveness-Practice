@@ -1,4 +1,3 @@
-/* eslint-disable max-depth */
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth'
@@ -20,8 +19,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const sessionUsername = session.user.name
 
   try {
-    const id: any = req?.query?.userId
-    if (!ObjectId.isValid(id)) {
+    const id = Array.isArray(req?.query?.userId) ? req.query.userId[0] : req?.query?.userId
+    if (!id || !ObjectId.isValid(id)) {
       return res.status(400).send(`Invalid ObjectID`)
     }
 
@@ -40,24 +39,32 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     if (req.method === 'PATCH') {
       try {
         const updatedKeys: string[] = []
-        for (const [key, value] of Object.entries(req?.body as Record<any, any>)) {
+        const payload = (req?.body ?? {}) as Record<string, unknown>
+        const targetUserRecord = targetUser as unknown as Record<string, unknown>
+
+        for (const [key, value] of Object.entries(payload)) {
           // Non-admins cannot update sensitive fields
           if (!isAdmin && ['isAdmin', 'role', 'accessKey'].includes(key)) {
             return res.status(403).json({ error: `Forbidden: cannot update field "${key}"` })
           }
 
-          if (targetUser[key] !== undefined) {
+          if (targetUserRecord[key] !== undefined) {
             if (key === 'settings') {
-              if (value?.defaultTimer) {
-                targetUser[key].defaultTimer = value?.defaultTimer
+              const settings = value as Record<string, unknown> | undefined
+              const nextSettings = { ...(targetUser.settings ?? {}) }
+
+              if (settings?.defaultTimer !== undefined) {
+                nextSettings.defaultTimer = settings.defaultTimer as number
                 updatedKeys.push(key)
               }
-              if (value?.autofillSessionName !== undefined) {
-                targetUser[key].autofillSessionName = value?.autofillSessionName
+              if (settings?.autofillSessionName !== undefined) {
+                nextSettings.autofillSessionName = settings.autofillSessionName as boolean
                 updatedKeys.push(key)
               }
+
+              targetUser.settings = nextSettings as typeof targetUser.settings
             } else {
-              targetUser[key] = value
+              targetUserRecord[key] = value
               updatedKeys.push(key)
             }
           }
@@ -75,7 +82,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     } else {
       return res.status(405).json({ error: 'Method Not Allowed' })
     }
-  } catch (err) {
+  } catch {
     return res.status(500).send({ error: 'Unknown Error Occurred' })
   }
 }

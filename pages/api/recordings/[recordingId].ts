@@ -18,8 +18,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   const isAdmin = session.user.role === 'admin'
 
   try {
-    const id: any = req.query.recordingId
-    if (!ObjectId.isValid(id)) {
+    const id = Array.isArray(req.query.recordingId) ? req.query.recordingId[0] : req.query.recordingId
+    if (!id || !ObjectId.isValid(id)) {
       return res.status(400).json({ error: 'Invalid ObjectID' })
     }
 
@@ -41,7 +41,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     } else {
       return res.status(405).json({ error: 'Method Not Allowed' })
     }
-  } catch (err) {
+  } catch {
     return res.status(500).json({ error: 'Unknown Error Occurred' })
   }
 }

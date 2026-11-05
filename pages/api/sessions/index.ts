@@ -233,20 +233,16 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
     }
 
     try {
-      let sessionDoc = await SessionModel.findOne({ name: sessionName, userId: user._id })
-
-      if (!sessionDoc) {
-        sessionDoc = new SessionModel({
-          name: sessionName,
-          userId: user._id,
-        })
-      }
-
-      if (topicName) {
-        sessionDoc.topicName = topicName
-      }
-      if (topicId) {
-        sessionDoc.topicId = topicId as unknown as typeof sessionDoc.topicId
+      const existingSessionDoc = await SessionModel.findOne({ name: sessionName, userId: user._id })
+      const sessionPayload = {
+        name: sessionName,
+        userId: user._id,
+        ...(topicId ? { topicId: topicId as unknown as string } : {}),
+        ...(topicName ? { topicName } : {}),
+        timer,
+        duration: timer,
+        attemptCount: existingSessionDoc?.attemptCount ?? 0,
+        status: existingSessionDoc?.status ?? 'active',
       }
 
       console.log('Before session save:', {
@@ -258,12 +254,16 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
         userId: String(user._id),
         username,
         topicName,
+        payload: sessionPayload,
       })
 
-      sessionDoc.timer = timer
-      sessionDoc.duration = timer
-      sessionDoc.name = sessionName
-      sessionDoc.userId = user._id
+      let sessionDoc
+      if (existingSessionDoc) {
+        sessionDoc = existingSessionDoc
+        Object.assign(sessionDoc, sessionPayload)
+      } else {
+        sessionDoc = new SessionModel(sessionPayload)
+      }
 
       const mongoSession = await mongoose.startSession()
       let createdRecording: { toJSON: () => Record<string, unknown> } | null = null

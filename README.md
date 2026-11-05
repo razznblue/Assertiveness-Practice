@@ -4,7 +4,12 @@ Many people struggle to speak up. In therapy, at work, in relationships, to them
 
 A topic and image is shown to you on the [home page](https://assertiveness-training.vercel.app/). Talk about the topic for the selected amount of time. When the timer runs out, the app will automatically display a new one. You can do this by yourself or with a partner! The timer is also customizable!
 
-Screenshots:
+# Try it Out Today!
+
+Website: [assertiveness-training.vercel.app](assertiveness-training.vercel.app)
+
+
+## Screenshots:
 
 <img width="1920" height="1080" alt="1" src="https://github.com/user-attachments/assets/aa7cb3f2-8023-40b2-9ad8-e243c6db8480" />
 <img width="1920" height="1080" alt="2" src="https://github.com/user-attachments/assets/bca41d62-0d2a-41e1-9166-6bcea2d877eb" />

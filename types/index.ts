@@ -53,6 +53,17 @@ export interface ActionItem {
   backgroundColor?: string
 }
 
+export interface TopicConflictError {
+  response?: {
+    status?: number
+    data?: {
+      topic?: {
+        _id?: string | null
+      }
+    }
+  }
+}
+
 export interface MyInformationTabProps {
   name?: string | null
   email?: string | null

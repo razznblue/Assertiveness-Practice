@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
 
 import { SessionField, SessionInput } from '@/components/Session/SessionField'
+import type { TopicConflictError } from '@/types'
 
 const NewSessionPage = () => {
   const { data: session } = useSession()
@@ -55,10 +56,13 @@ const NewSessionPage = () => {
     try {
       const res = await axios.post('/api/topics', { name: topic })
       return res?.data?.topic._id ?? null
-    } catch (error: any) {
-      if (error?.response?.status === 409) {
-        return error?.response?.data?.topic?._id ?? null
+    } catch (error: unknown) {
+      const topicError = error as TopicConflictError
+
+      if (topicError?.response?.status === 409) {
+        return topicError.response?.data?.topic?._id ?? null
       }
+
       console.error('Failed to create/resolve topic:', error)
       return null
     }

@@ -1,6 +1,5 @@
-import type { RefObject } from 'react'
 import { PlayIcon, TrashIcon } from '@/components/Icons'
-import type { HistoryItem, MyProgressTabProps } from '@/types'
+import type { MyProgressTabProps } from '@/types'
 
 const MyProgressTab = ({
   loading,

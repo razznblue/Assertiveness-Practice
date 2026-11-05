@@ -350,6 +350,15 @@ async function handleJsonSessionCreate(req: NextApiRequest, res: NextApiResponse
 
   try {
     const sessionDuration = Number(duration ?? timer ?? 60)
+
+    console.log('Attempting to create new session:', {
+      name: normalizedName,
+      userId,
+      topicId,
+      topicName,
+      duration: sessionDuration,
+    })
+
     const newSession = new SessionModel({
       name: normalizedName,
       userId,

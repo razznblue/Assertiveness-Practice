@@ -306,7 +306,9 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
         await mongoSession.endSession().catch(() => undefined)
       }
     } catch (error) {
-      console.error('Session/recording save failed:', {
+      console.error('Session/recording save failed. Full error dump:')
+      console.error(error)
+      console.error('Session/recording save failed metadata:', {
         error: getErrorMessage(error),
         sessionId: savedSessionId,
         userId: savedUserId,

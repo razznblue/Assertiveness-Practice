@@ -6,7 +6,7 @@ A topic and image is shown to you on the [home page](https://assertiveness-train
 
 # Try it Out Today!
 
-Website: [assertiveness-training.vercel.app](assertiveness-training.vercel.app)
+Website: [assertiveness-training.vercel.app](https://assertiveness-training.vercel.app)
 
 <details>
 <summary>Development Docs</summary>

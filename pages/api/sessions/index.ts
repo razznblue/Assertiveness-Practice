@@ -24,6 +24,16 @@ const getFieldValue = (value: string | string[] | undefined) => {
   return value ?? ''
 }
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message
+  if (typeof error === 'string') return error
+  try {
+    return JSON.stringify(error)
+  } catch {
+    return 'Unknown error'
+  }
+}
+
 type RecordingWithUrl = {
   recordingUrl?: string
   [key: string]: unknown
@@ -145,6 +155,9 @@ async function handleDeleteRecording(req: NextApiRequest, res: NextApiResponse) 
 }
 
 async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiResponse) {
+  let savedSessionId: string | null = null
+  let savedUserId: string | null = null
+
   try {
     const { fields, files } = await new Promise<{ fields: formidable.Fields; files: formidable.Files }>((resolve, reject) => {
       const form = formidable({
@@ -188,13 +201,24 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
       return res.status(404).json({ error: `User ${username} was not found.` })
     }
 
+    savedUserId = String(user._id)
+
     const fileBuffer = await fs.promises.readFile(rawAudio.filepath)
-    const upload = await uploadAudioToR2({
-      fileBuffer,
-      fileName: rawAudio.originalFilename || `${sessionName}.webm`,
-      contentType: rawAudio.mimetype || 'audio/webm',
-      folder: `sessions/${username}`,
-    })
+    let upload: { key: string; url: string }
+    try {
+      upload = await uploadAudioToR2({
+        fileBuffer,
+        fileName: rawAudio.originalFilename || `${sessionName}.webm`,
+        contentType: rawAudio.mimetype || 'audio/webm',
+        folder: `sessions/${username}`,
+      })
+    } catch (error) {
+      console.error('Failed to upload audio to R2:', error)
+      return res.status(500).json({
+        error: 'Failed to upload audio to storage.',
+        reason: getErrorMessage(error),
+      })
+    }
 
     try {
       let sessionDoc = await SessionModel.findOne({ name: sessionName, userId: user._id })
@@ -218,6 +242,7 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
       sessionDoc.name = sessionName
       sessionDoc.userId = user._id
       await sessionDoc.save()
+      savedSessionId = String(sessionDoc._id)
 
       const recordingId = `recording-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       const recordingDoc = await RecordingModel.create({
@@ -236,16 +261,43 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
         topicId,
       })
     } catch (error) {
-      await deleteAudioFromR2(upload.key)
-      throw error
+      console.error('Session saved but recording creation failed:', {
+        error: getErrorMessage(error),
+        sessionId: savedSessionId,
+        userId: savedUserId,
+        topicId,
+        sessionName,
+      })
+
+      try {
+        await deleteAudioFromR2(upload.key)
+      } catch (cleanupError) {
+        console.warn('Failed to clean up uploaded audio after recording save failure:', cleanupError)
+      }
+
+      return res.status(500).json({
+        error: 'Session was created, but the recording metadata could not be saved.',
+        reason: getErrorMessage(error),
+        sessionId: savedSessionId,
+        userId: savedUserId,
+      })
     } finally {
       if (rawAudio.filepath) {
         await fs.promises.rm(rawAudio.filepath, { force: true }).catch(() => undefined)
       }
     }
   } catch (error) {
-    console.error('Failed to save recording:', error)
-    return res.status(500).json({ error: 'Failed to save recording.' })
+    console.error('Failed to save recording request:', {
+      error: getErrorMessage(error),
+      sessionId: savedSessionId,
+      userId: savedUserId,
+    })
+    return res.status(500).json({
+      error: 'Failed to save recording.',
+      reason: getErrorMessage(error),
+      sessionId: savedSessionId,
+      userId: savedUserId,
+    })
   }
 }
 

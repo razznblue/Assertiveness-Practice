@@ -55,11 +55,17 @@ export default function SessionScreen() {
   }
 
   const handleSave = async (audioBlob: Blob) => {
+    const safeSessionName = sessionName?.trim()
+    if (!safeSessionName) {
+      console.error('Session name is missing before upload.')
+      return
+    }
+
     try {
       const formData = new FormData()
-      formData.append('audio', audioBlob, `${sessionName}.webm`)
-      formData.append('sessionName', sessionName)
-      formData.append('topicId', topicId)
+      formData.append('audio', audioBlob, `${safeSessionName}.webm`)
+      formData.append('sessionName', safeSessionName)
+      formData.append('topicId', topicId ?? '')
       formData.append('topicName', topic)
       formData.append('timer', String(timer))
       formData.append('username', session?.user?.name ?? '')

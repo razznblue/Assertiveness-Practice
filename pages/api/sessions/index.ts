@@ -1,4 +1,5 @@
 import fs from 'fs'
+import mongoose from 'mongoose'
 import { NextApiRequest, NextApiResponse } from 'next'
 import formidable from 'formidable'
 import { getServerSession } from 'next-auth'
@@ -23,6 +24,12 @@ const getFieldValue = (value: string | string[] | undefined) => {
   if (Array.isArray(value)) return value[0]
   return value ?? ''
 }
+
+const normalizeSessionName = (value: string | undefined) =>
+  value
+    ?.replace(/\u0000/g, '')
+    .replace(/\s+/g, ' ')
+    .trim() ?? ''
 
 const getErrorMessage = (error: unknown) => {
   if (error instanceof Error) return error.message
@@ -182,10 +189,10 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
     }
 
     const sessionNameInput = getFieldValue(fields.sessionName)
-    const sessionName = sessionNameInput.trim()
-    const username = getFieldValue(fields.username) || getFieldValue(fields.userId)
+    const sessionName = normalizeSessionName(sessionNameInput)
+    const username = (getFieldValue(fields.username) || getFieldValue(fields.userId) || '').trim()
     const topicId = getFieldValue(fields.topicId)
-    const topicName = getFieldValue(fields.topicName)
+    const topicName = normalizeSessionName(getFieldValue(fields.topicName)) || getFieldValue(fields.topicName)?.trim() || ''
     const timerValue = Number(getFieldValue(fields.timer))
     const timer = Number.isFinite(timerValue) && timerValue > 0 ? timerValue : 60
 
@@ -193,6 +200,7 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
       return res.status(400).json({
         error: 'Session name is required.',
         received: sessionNameInput,
+        field: 'sessionName',
       })
     }
 
@@ -245,27 +253,49 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
       sessionDoc.duration = timer
       sessionDoc.name = sessionName
       sessionDoc.userId = user._id
-      await sessionDoc.save()
-      savedSessionId = String(sessionDoc._id)
 
-      const recordingId = `recording-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-      const recordingDoc = await RecordingModel.create({
-        recordingId,
-        recordingUrl: upload.url,
-        sessionId: sessionDoc._id,
-        userId: user._id,
-        duration: timer,
-      })
+      const mongoSession = await mongoose.startSession()
+      let createdRecording: { toJSON: () => Record<string, unknown> } | null = null
 
-      return res.status(201).json({
-        message: 'Recording saved successfully.',
-        session: sessionDoc.toJSON(),
-        recording: recordingDoc.toJSON(),
-        r2Key: upload.key,
-        topicId,
-      })
+      try {
+        await mongoSession.withTransaction(async () => {
+          await sessionDoc.save({ session: mongoSession })
+          savedSessionId = String(sessionDoc._id)
+
+          const recordingId = `recording-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+          const recordingDoc = await RecordingModel.create(
+            [{
+              recordingId,
+              recordingUrl: upload.url,
+              sessionId: sessionDoc._id,
+              userId: user._id,
+              duration: timer,
+              fileSize: fileBuffer.byteLength,
+            }],
+            { session: mongoSession }
+          )
+
+          createdRecording = recordingDoc[0]
+        })
+
+        return res.status(201).json({
+          message: 'Recording saved successfully.',
+          session: sessionDoc.toJSON(),
+          recording: createdRecording?.toJSON?.() ?? null,
+          r2Key: upload.key,
+          topicId,
+        })
+      } catch (error) {
+        if (savedSessionId) {
+          await SessionModel.findByIdAndDelete(savedSessionId).catch(() => undefined)
+        }
+
+        throw error
+      } finally {
+        await mongoSession.endSession().catch(() => undefined)
+      }
     } catch (error) {
-      console.error('Session saved but recording creation failed:', {
+      console.error('Session/recording save failed:', {
         error: getErrorMessage(error),
         sessionId: savedSessionId,
         userId: savedUserId,
@@ -276,14 +306,19 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
       try {
         await deleteAudioFromR2(upload.key)
       } catch (cleanupError) {
-        console.warn('Failed to clean up uploaded audio after recording save failure:', cleanupError)
+        console.warn('Failed to clean up uploaded audio after session/recording save failure:', cleanupError)
+      }
+
+      if (savedSessionId) {
+        await SessionModel.findByIdAndDelete(savedSessionId).catch(() => undefined)
       }
 
       return res.status(500).json({
-        error: 'Session was created, but the recording metadata could not be saved.',
+        error: 'Session and recording could not be saved together.',
         reason: getErrorMessage(error),
         sessionId: savedSessionId,
         userId: savedUserId,
+        topicId,
       })
     } finally {
       if (rawAudio.filepath) {
@@ -307,15 +342,16 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
 
 async function handleJsonSessionCreate(req: NextApiRequest, res: NextApiResponse) {
   const { name, userId, topicId, duration, topicName, timer } = req.body || {}
+  const normalizedName = String(name ?? '').trim()
 
-  if (!name || !userId) {
+  if (!normalizedName || !userId) {
     return res.status(400).json({ error: 'name and userId are required' })
   }
 
   try {
     const sessionDuration = Number(duration ?? timer ?? 60)
     const newSession = new SessionModel({
-      name,
+      name: normalizedName,
       userId,
       topicId,
       topicName,

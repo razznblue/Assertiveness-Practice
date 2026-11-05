@@ -6,7 +6,7 @@ import Topic from './Topic'
 
 @modelOptions({ schemaOptions: { collection: 'Session', versionKey: false, timestamps: true } })
 class Session {
-  @prop({ required: true })
+  @prop({ required: true, trim: true })
   public name: string
 
   @prop({ required: false })

@@ -8,13 +8,14 @@ import Modal from '@/components/Modal'
 import { ChevronIcon } from '@/components/Icons'
 import MyInformationTab from '@/components/Profile/Tabs/MyInformationTab'
 import MyProgressTab from '@/components/Profile/Tabs/MyProgressTab'
+import MyLibraryTab from '@/components/Profile/Tabs/MyLibraryTab'
 import FeedbackTab from '@/components/Profile/Tabs/FeedbackTab'
 import PracticeTipsTab from '@/components/Profile/Tabs/PracticeTipsTab'
 import SettingsTab from '@/components/Profile/Tabs/SettingsTab'
 import PlaceholderTab from '@/components/Profile/Tabs/PlaceholderTab'
 import type { HistoryItem, HistoryRecording, HistorySession, ProfileTab } from '@/types'
 
-const tabs = ['My Progress', 'My Information', 'Achievements', 'Settings', 'Feedback', 'Practice Tips', 'Logout'] as const
+const tabs = ['My Progress', 'My Information', 'My Library', 'Achievements', 'Settings', 'Feedback', 'Practice Tips', 'Logout'] as const
 
 const ProfileSidebar = ({
   activeTab,
@@ -73,7 +74,7 @@ const ProfilePage = () => {
   const router = useRouter()
   const initialTab =
     typeof router.query.tab === 'string' &&
-    ['My Progress', 'My Information', 'Achievements', 'Settings', 'Feedback', 'Practice Tips', 'Logout'].includes(router.query.tab)
+    ['My Progress', 'My Information', 'My Library', 'Achievements', 'Settings', 'Feedback', 'Practice Tips', 'Logout'].includes(router.query.tab)
       ? (router.query.tab as ProfileTab)
       : 'My Progress'
 
@@ -210,7 +211,9 @@ const ProfilePage = () => {
           />
         )
       case 'My Information':
-        return <MyInformationTab name={session?.user?.name} email={session?.user?.email} />
+        return <MyInformationTab name={session?.user?.name} email={session?.user?.email} avatarImgUrl={session?.user?.image ?? undefined} />
+      case 'My Library':
+        return <MyLibraryTab />
       case 'Feedback':
         return <FeedbackTab />
       case 'Practice Tips':
@@ -240,7 +243,13 @@ const ProfilePage = () => {
   }
 
   const sectionTitle =
-    activeTab === 'My Progress' ? 'My History' : activeTab === 'My Information' ? 'My Information' : activeTab
+    activeTab === 'My Progress'
+      ? 'My History'
+      : activeTab === 'My Information'
+        ? 'My Information'
+        : activeTab === 'My Library'
+          ? 'My Library'
+          : activeTab
 
   return (
     <>

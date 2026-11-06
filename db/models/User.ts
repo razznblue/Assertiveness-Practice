@@ -1,6 +1,21 @@
 import { modelOptions, prop } from '@typegoose/typegoose'
 import { defaultAvatarImg } from '@/util/constants'
 
+@modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false },  options: { customName: 'UserAvatars' } })
+export class UserAvatars {
+  @prop()
+  public avatarSvg?: string
+
+  @prop()
+  public seed?: string
+}
+
+@modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false },  options: { customName: 'UserLibrary' } })
+export class UserLibrary {
+  @prop()
+  public userAvatars?: UserAvatars[]
+}
+
 @modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false },  options: { customName: 'UserProvider' } })
 export class UserProvider {
   @prop()
@@ -51,6 +66,9 @@ class User {
 
   @prop({ type: () => UserSettings, _id: false, default: () => ({ ...DEFAULT_USER_SETTINGS }) })
   public settings: UserSettings
+
+  @prop({ type: () => UserLibrary, _id: false, default: () => ({ userAvatars: [] }) })
+  public library: UserLibrary
 
   // @prop({ ref: () => PlayerStats })
   // public playerStatsId: typegoose.Ref<PlayerStats>

@@ -1,14 +1,81 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import axios from 'axios'
 import { useSession, signIn, signOut } from 'next-auth/react'
 
 import { BrandDividerIcon } from '@/components/Icons'
+import { defaultAvatarImg } from '@/util/constants'
+
+const normalizeAvatarSource = (value?: string | null) => {
+  if (!value) return defaultAvatarImg
+  if (value.trim().startsWith('<svg')) {
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(value)}`
+  }
+  return value
+}
 
 export function Layout({ children }: { children: ReactNode }) {
   const { data: session } = useSession()
+  const [dbProfileImage, setDbProfileImage] = useState<string | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   const lineColor = '#dfdfdf'
+  const profileImage = normalizeAvatarSource(
+    session ? (dbProfileImage || session.user.image || defaultAvatarImg) : defaultAvatarImg,
+  )
+
+  useEffect(() => {
+    if (!session?.user?.name) {
+      return
+    }
+
+    let isMounted = true
+
+    const loadProfileImage = async () => {
+      try {
+        const res = await axios.get(`/api/users?username=${encodeURIComponent(session.user.name)}`)
+        const nextAvatar = normalizeAvatarSource(res?.data?.avatarImgUrl || session.user.image || defaultAvatarImg)
+
+        if (isMounted) {
+          setDbProfileImage(nextAvatar)
+        }
+      } catch {
+        if (isMounted) {
+          setDbProfileImage(normalizeAvatarSource(session.user.image || defaultAvatarImg))
+        }
+      }
+    }
+
+    void loadProfileImage()
+
+    return () => {
+      isMounted = false
+    }
+  }, [session?.user?.image, session?.user?.name])
+
+  useEffect(() => {
+    if (!menuOpen) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [menuOpen])
+
+  const navItems = [
+    { label: 'My Progress', href: '/profile?tab=My%20Progress' },
+    { label: 'My Information', href: '/profile?tab=My%20Information' },
+    { label: 'My Library', href: '/profile?tab=My%20Library' },
+    { label: 'Feedback', href: '/profile?tab=Feedback' },
+    { label: 'Practice Tips', href: '/profile?tab=Practice%20Tips' },
+    { label: 'Settings', href: '/profile?tab=Settings' },
+  ]
 
   return (
     <div className="mx-auto flex h-screen flex-col bg-[#0A192F]">
@@ -42,26 +109,78 @@ export function Layout({ children }: { children: ReactNode }) {
             </ul>
           </div>
           <div className="hidden flex-1 justify-end md:flex">
-            <nav className="inline-flex flex-row items-center">
-              <span className="text-[#449E90] flex items-center h-full ml-2 cursor-pointer text-accents-5">
+            <nav className="inline-flex flex-row items-center gap-3">
+              {session ? (
+                <>
+                  <Link
+                    href="/session/new"
+                    aria-label="New session"
+                    title="New session"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#4ec7b4] bg-[#4ec7b4]/10 px-3 py-2 text-sm font-semibold text-[#4ec7b4] transition hover:bg-[#4ec7b4]/20"
+                  >
+                    <span className="text-xl leading-none">+</span>
+                    <span>new session</span>
+                  </Link>
+
+                  <div ref={menuRef} className="relative">
+                    <button
+                      type="button"
+                      aria-label="Open profile menu"
+                      aria-expanded={menuOpen}
+                      onClick={() => setMenuOpen((current) => !current)}
+                      className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-[#1b2e3f] shadow-md shadow-black/20 transition hover:border-[#4ec7b4]"
+                    >
+                      <Image
+                        src={profileImage}
+                        alt="Profile"
+                        width={44}
+                        height={44}
+                        className="h-full w-full object-cover"
+                        unoptimized={profileImage.startsWith('data:') || profileImage.startsWith('blob:')}
+                      />
+                    </button>
+
+                    {menuOpen && (
+                      <div className="absolute right-0 top-full z-30 mt-3 w-64 overflow-hidden rounded-2xl border border-white/10 bg-[#1b2e3f] p-2 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
+                        <div className="mb-2 border-b border-white/10 pb-2">
+                          <p className="px-3 pt-2 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                            Navigate
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          {navItems.map((item) => (
+                            <Link
+                              key={item.label}
+                              href={item.href}
+                              onClick={() => setMenuOpen(false)}
+                              className="block rounded-xl px-3 py-2 text-left text-base font-medium text-slate-100 transition hover:bg-white/5"
+                            >
+                              {item.label}
+                            </Link>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMenuOpen(false)
+                              void signOut({ callbackUrl: '/' })
+                            }}
+                            className="mt-1 w-full rounded-xl border border-[#4ec7b4]/30 bg-[#4ec7b4]/10 px-3 py-2 text-left text-base font-medium text-[#4ec7b4] transition hover:bg-[#4ec7b4]/20"
+                          >
+                            Sign Out
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
                 <button
                   type="button"
-                  className="relative inline-flex h-10 cursor-pointer items-center justify-center rounded-md px-3.5 align-middle text-[18px] font-medium text-success transition-colors duration-200 hover:bg-[rgba(0,68,255,0.06)]"
-                  onClick={() => (session ? signOut() : signIn())}
+                  className="relative inline-flex h-10 cursor-pointer items-center justify-center rounded-md px-3.5 align-middle text-[18px] font-medium text-[#4ec7b4] transition-colors duration-200 hover:bg-[rgba(0,68,255,0.06)]"
+                  onClick={() => signIn()}
                 >
-                  {session ? 'Sign Out' : 'Sign In'}
+                  Sign In
                 </button>
-              </span>
-              {session && (
-                <span className="text-[#449E90] flex items-center h-full ml-2 cursor-pointer text-accents-5">
-                  <Link
-                    href="/profile"
-                    data-variant="primary"
-                    className="relative inline-flex items-center justify-center cursor-pointer whitespace-nowrap rounded-md border border-[#dfdfdf] border-solid bg-success px-3.5 text-[18px] font-medium text-background shadow-[0_5px_10px_rgb(0,68,255,0.12)] transition-colors duration-200 hover:bg-success/90"
-                  >
-                    Profile
-                  </Link>
-                </span>
               )}
             </nav>
           </div>

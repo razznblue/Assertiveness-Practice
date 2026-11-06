@@ -210,7 +210,7 @@ const ProfilePage = () => {
           />
         )
       case 'My Information':
-        return <MyInformationTab name={session?.user?.name} email={session?.user?.email} />
+        return <MyInformationTab name={session?.user?.name} email={session?.user?.email} avatarImgUrl={session?.user?.image ?? undefined} />
       case 'Feedback':
         return <FeedbackTab />
       case 'Practice Tips':

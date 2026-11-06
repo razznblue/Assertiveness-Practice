@@ -70,6 +70,7 @@ export interface TopicConflictError {
 export interface MyInformationTabProps {
   name?: string | null
   email?: string | null
+  avatarImgUrl?: string | null
 }
 
 export interface UserSettings {

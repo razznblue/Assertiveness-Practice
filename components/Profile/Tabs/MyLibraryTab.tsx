@@ -25,7 +25,6 @@ const MyLibraryTab = () => {
 
   useEffect(() => {
     if (!session?.user?.name) {
-      setLoading(false)
       return
     }
 

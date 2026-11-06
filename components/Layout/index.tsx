@@ -17,15 +17,17 @@ const normalizeAvatarSource = (value?: string | null) => {
 
 export function Layout({ children }: { children: ReactNode }) {
   const { data: session } = useSession()
-  const [profileImage, setProfileImage] = useState(defaultAvatarImg)
+  const [dbProfileImage, setDbProfileImage] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
   const lineColor = '#dfdfdf'
+  const profileImage = normalizeAvatarSource(
+    session ? (dbProfileImage || session.user.image || defaultAvatarImg) : defaultAvatarImg,
+  )
 
   useEffect(() => {
     if (!session?.user?.name) {
-      setProfileImage(session?.user?.image || defaultAvatarImg)
       return
     }
 
@@ -37,11 +39,11 @@ export function Layout({ children }: { children: ReactNode }) {
         const nextAvatar = normalizeAvatarSource(res?.data?.avatarImgUrl || session.user.image || defaultAvatarImg)
 
         if (isMounted) {
-          setProfileImage(nextAvatar)
+          setDbProfileImage(nextAvatar)
         }
       } catch {
         if (isMounted) {
-          setProfileImage(normalizeAvatarSource(session.user.image || defaultAvatarImg))
+          setDbProfileImage(normalizeAvatarSource(session.user.image || defaultAvatarImg))
         }
       }
     }

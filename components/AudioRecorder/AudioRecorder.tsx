@@ -21,9 +21,14 @@ const AudioRecorder = ({
   topic = 'Notebook',
   topicImage = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80',
   sessionName = 'JanSession-1',
+  timerSeconds = 60,
+  allowOvertime = false,
+  replaceTopicOnTimeout = false,
+  backLink = '/session/new',
   onSave,
   onRestart,
   onHome,
+  onTimeout,
 }: AudioRecorderProps) => {
   const [permission, setPermission] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
@@ -36,6 +41,8 @@ const AudioRecorder = ({
   const [recordingTime, setRecordingTime] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const timeoutTriggeredRef = useRef(false)
 
   useEffect(() => {
     if (recordingStatus !== 'recording') {
@@ -46,7 +53,22 @@ const AudioRecorder = ({
       return
     }
 
-    timerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000)
+    timerRef.current = setInterval(() => {
+      setRecordingTime((currentTime) => {
+        const nextTime = currentTime + 1
+
+        if (timerSeconds > 0 && !allowOvertime && nextTime >= timerSeconds && !timeoutTriggeredRef.current) {
+          timeoutTriggeredRef.current = true
+          window.setTimeout(() => {
+            if (mediaRecorder.current?.state === 'recording') {
+              stopRecording(true)
+            }
+          }, 0)
+        }
+
+        return nextTime
+      })
+    }, 1000)
 
     return () => {
       if (timerRef.current) {
@@ -54,7 +76,11 @@ const AudioRecorder = ({
         timerRef.current = null
       }
     }
-  }, [recordingStatus])
+  }, [allowOvertime, recordingStatus, timerSeconds])
+
+  useEffect(() => {
+    audioChunksRef.current = audioChunks
+  }, [audioChunks])
 
   useEffect(() => {
     return () => {
@@ -87,32 +113,51 @@ const AudioRecorder = ({
   }
 
   const startRecording = async () => {
-    if (!permission) await getMicrophonePermission()
+    if (!permission && !stream) await getMicrophonePermission()
+    if (!stream) return
+
+    timeoutTriggeredRef.current = false
+    const localChunks: Blob[] = []
+    audioChunksRef.current = localChunks
+    setAudioChunks(localChunks)
     setRecordingStatus('recording')
     setRecordingTime(0)
     setAudio(null)
     setAudioBlob(null)
 
-    const media = new MediaRecorder(stream!, { mimeType })
+    const media = new MediaRecorder(stream, { mimeType })
     mediaRecorder.current = media
-    mediaRecorder.current.start()
-
-    const localChunks: Blob[] = []
     mediaRecorder.current.ondataavailable = (event) => {
-      if (event.data?.size > 0) localChunks.push(event.data)
+      if (event.data?.size > 0) {
+        localChunks.push(event.data)
+        audioChunksRef.current = [...localChunks]
+        setAudioChunks([...localChunks])
+      }
     }
-    setAudioChunks(localChunks)
+    mediaRecorder.current.start()
   }
 
-  const stopRecording = () => {
+  const stopRecording = (autoStop = false) => {
+    if (!mediaRecorder.current || mediaRecorder.current.state === 'inactive') {
+      setRecordingStatus('stopped')
+      return
+    }
+
     setRecordingStatus('stopped')
-    mediaRecorder.current?.stop()
-    mediaRecorder.current!.onstop = () => {
-      const blob = new Blob(audioChunks, { type: mimeType })
+    mediaRecorder.current.stop()
+    mediaRecorder.current.onstop = () => {
+      const blob = new Blob(audioChunksRef.current, { type: mimeType })
       const url = URL.createObjectURL(blob)
       setAudio(url)
       setAudioBlob(blob)
       setAudioChunks([])
+      audioChunksRef.current = []
+
+      if (autoStop && replaceTopicOnTimeout && onTimeout) {
+        onTimeout()
+        return
+      }
+
       setShowModal(true)
     }
   }
@@ -155,7 +200,7 @@ const AudioRecorder = ({
           <div className={styles['ar-bottom']}>
             <Button
               text="Back"
-              link="/session/new"
+              link={backLink}
               backgroundColor="bg-primary"
               clickFunction={null}
               disableLink={false}
@@ -183,7 +228,11 @@ const AudioRecorder = ({
               <ReviewSessionButton onClick={() => setShowModal(true)} />
             )}
 
-            <button type="button" className={clsx(styles['ar-btn'], styles['ar-btn-danger'])}>
+            <button
+              type="button"
+              className={clsx(styles['ar-btn'], styles['ar-btn-danger'])}
+              onClick={() => handleAction('home')}
+            >
               End Session
             </button>
           </div>

@@ -15,13 +15,24 @@ export default function SessionScreen() {
   const topicId = router.query.topicId as string
   const timerFromQuery = Number(router.query.timer ?? '60')
   const timer = Number.isFinite(timerFromQuery) && timerFromQuery > 0 ? timerFromQuery : 60
+  const shouldReplaceTopicOnTimeout = router.query.replaceTopicOnTimeout === 'true'
+  const allowOvertime = router.query.allowOvertime === 'true'
 
   const [topic, setTopic] = useState('')
   const [topicImage, setTopicImage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [isUploading, setIsUploading] = useState(false)
   const [pendingUploadKey, setPendingUploadKey] = useState<string | null>(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const hasFetched = useRef(false)
+  const backLink = `/session/new?${new URLSearchParams({
+    sessionName: sessionName ?? '',
+    topic: topic || '',
+    topicId: topicId || '',
+    timer: String(timer),
+    replaceTopicOnTimeout: String(shouldReplaceTopicOnTimeout),
+    allowOvertime: String(allowOvertime),
+  }).toString()}`
 
   useEffect(() => {
     if (!topicId || hasFetched.current) return
@@ -64,6 +75,8 @@ export default function SessionScreen() {
     }
 
     try {
+      setIsUploading(true)
+
       const formData = new FormData()
       formData.append('audio', audioBlob, `${safeSessionName}.webm`)
       formData.append('sessionName', safeSessionName)
@@ -80,17 +93,64 @@ export default function SessionScreen() {
       setShowSuccessModal(true)
     } catch (e) {
       console.error('Failed to save session:', e)
+    } finally {
+      setIsUploading(false)
     }
   }
 
   const handleRestart = async () => {
     await deletePendingUpload()
-    router.push('/session/new')
+
+    const params = new URLSearchParams({
+      sessionName: sessionName ?? '',
+      topic: topic || '',
+      topicId: topicId ?? '',
+      timer: String(timer),
+      replaceTopicOnTimeout: String(shouldReplaceTopicOnTimeout),
+      allowOvertime: String(allowOvertime),
+    })
+
+    await router.push(`/session/${encodeURIComponent(sessionName ?? '')}?${params.toString()}`)
+  }
+
+  const handleTimeout = async () => {
+    try {
+      const res = await axios.get('/api/topics/random')
+      const nextTopicId = res?.data?.topic?._id
+      const nextTopicName = res?.data?.topic?.name ?? topic
+
+      if (!nextTopicId) return
+
+      const params = new URLSearchParams({
+        sessionName: sessionName ?? '',
+        topic: nextTopicName,
+        topicId: nextTopicId,
+        timer: String(timer),
+        replaceTopicOnTimeout: String(shouldReplaceTopicOnTimeout),
+        allowOvertime: String(allowOvertime),
+      })
+
+      await router.push(`/session/${encodeURIComponent(sessionName ?? '')}?${params.toString()}`)
+    } catch (error) {
+      console.error('Failed to fetch replacement topic:', error)
+    }
   }
 
   const handleHome = async () => {
     await deletePendingUpload()
     router.push('/')
+  }
+
+  const handleNewSessionSameTopic = async () => {
+    setShowSuccessModal(false)
+    await deletePendingUpload()
+    await router.push('/session/new')
+  }
+
+  const handleGoToProgress = async () => {
+    setShowSuccessModal(false)
+    await deletePendingUpload()
+    await router.push('/profile')
   }
 
   const handleSuccessClose = async () => {
@@ -105,13 +165,28 @@ export default function SessionScreen() {
 
   return (
     <>
+      {isUploading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0A192F]/80 backdrop-blur-sm">
+          <div className="rounded-2xl border border-white/10 bg-[#132737] px-6 py-5 text-center text-white shadow-xl">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-white/20 border-t-[#4ec7b4]" />
+            <p className="mt-3 text-lg font-semibold">Uploading recording...</p>
+            <p className="text-sm text-slate-300">This may take a moment.</p>
+          </div>
+        </div>
+      )}
+
       <AudioRecorder
         topic={topic}
         topicImage={topicImage}
         sessionName={sessionName}
+        timerSeconds={timer}
+        allowOvertime={allowOvertime}
+        replaceTopicOnTimeout={shouldReplaceTopicOnTimeout}
+        backLink={backLink}
         onSave={handleSave}
         onRestart={handleRestart}
         onHome={handleHome}
+        onTimeout={handleTimeout}
       />
 
       <Modal
@@ -120,9 +195,31 @@ export default function SessionScreen() {
         title="Session Saved"
         description="Your recording was saved successfully and added to your progress history."
         icon={<CheckIcon size={26} style={{ stroke: '#38bda4' }} />}
-        primaryButtonText="Back to Home"
-        onPrimaryClick={handleSuccessClose}
-      />
+      >
+        <div className="mt-4 flex flex-col gap-3">
+          <button
+            type="button"
+            className="rounded-xl bg-[#4ec7b4] px-4 py-3 font-semibold text-[#0A192F]"
+            onClick={handleSuccessClose}
+          >
+            Back To Home
+          </button>
+          <button
+            type="button"
+            className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 font-semibold text-white"
+            onClick={handleNewSessionSameTopic}
+          >
+            Start a New Session
+          </button>
+          <button
+            type="button"
+            className="rounded-xl border border-[#4ec7b4]/60 bg-[#132737] px-4 py-3 font-semibold text-[#4ec7b4]"
+            onClick={handleGoToProgress}
+          >
+            Go To My Progress
+          </button>
+        </div>
+      </Modal>
     </>
   )
 }

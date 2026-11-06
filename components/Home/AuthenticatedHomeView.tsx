@@ -1,10 +1,10 @@
 import ActionButtonGrid from '@/components/Home/ActionButtonGrid'
 
 const actions = [
-  { text: 'My Profile', link: '/profile' },
-  { text: 'My Progress', link: '/profile' },
+  { text: 'My Profile', link: '/profile?tab=My%20Information' },
+  { text: 'My Progress', link: '/profile?tab=My%20Progress' },
   { text: 'New Session', link: '/session/new' },
-  { text: 'My Settings', link: '/' },
+  { text: 'My Settings', link: '/profile?tab=Settings' },
 ]
 
 const AuthenticatedHomeView = ({

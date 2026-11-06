@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import axios from 'axios'
 import { signOut, useSession } from 'next-auth/react'
 
+import Modal from '@/components/Modal'
 import { ChevronIcon } from '@/components/Icons'
 import MyInformationTab from '@/components/Profile/Tabs/MyInformationTab'
 import MyProgressTab from '@/components/Profile/Tabs/MyProgressTab'
 import FeedbackTab from '@/components/Profile/Tabs/FeedbackTab'
+import SettingsTab from '@/components/Profile/Tabs/SettingsTab'
 import PlaceholderTab from '@/components/Profile/Tabs/PlaceholderTab'
 import type { HistoryItem, HistoryRecording, HistorySession, ProfileTab } from '@/types'
 
@@ -15,9 +18,11 @@ const tabs = ['My Progress', 'My Information', 'Achievements', 'Settings', 'Feed
 const ProfileSidebar = ({
   activeTab,
   onChange,
+  onLogoutClick,
 }: {
   activeTab: ProfileTab
   onChange: (tab: ProfileTab) => void
+  onLogoutClick: () => void
 }) => (
   <aside className="w-[350px] rounded-[28px] bg-[#1b2e3f] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.2)]">
     <ul className="space-y-5">
@@ -31,7 +36,7 @@ const ProfileSidebar = ({
               type="button"
               onClick={() => {
                 if (tab === 'Logout') {
-                  signOut({ callbackUrl: '/' })
+                  onLogoutClick()
                   return
                 }
                 onChange(tab)
@@ -64,11 +69,28 @@ const ProfileHeader = ({ title }: { title: string }) => (
 
 const ProfilePage = () => {
   const { data: session } = useSession()
-  const [activeTab, setActiveTab] = useState<ProfileTab>('My Progress')
+  const router = useRouter()
+  const initialTab =
+    typeof router.query.tab === 'string' &&
+    ['My Progress', 'My Information', 'Achievements', 'Settings', 'Feedback', 'Logout'].includes(router.query.tab)
+      ? (router.query.tab as ProfileTab)
+      : 'My Progress'
+
+  const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({})
+
+  useEffect(() => {
+    if (router.isReady && typeof router.query.tab === 'string') {
+      const nextTab = router.query.tab as ProfileTab
+      if (['My Progress', 'My Information', 'Achievements', 'Settings', 'Feedback', 'Logout'].includes(nextTab)) {
+        setActiveTab(nextTab)
+      }
+    }
+  }, [router.isReady, router.query.tab])
 
   useEffect(() => {
     if (!session?.user?.name) return
@@ -169,6 +191,11 @@ const ProfilePage = () => {
     }
   }
 
+  const handleLogout = async () => {
+    setShowLogoutModal(false)
+    await signOut({ callbackUrl: '/' })
+  }
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'My Progress':
@@ -190,7 +217,7 @@ const ProfilePage = () => {
       case 'Achievements':
         return <PlaceholderTab title="Achievements" />
       case 'Settings':
-        return <PlaceholderTab title="Settings" />
+        return <SettingsTab />
       default:
         return <PlaceholderTab title="Profile" />
     }
@@ -215,18 +242,35 @@ const ProfilePage = () => {
     activeTab === 'My Progress' ? 'My History' : activeTab === 'My Information' ? 'My Information' : activeTab
 
   return (
-    <div className="min-h-screen bg-[#0A192F] px-6 py-10 text-white">
-      <div className="mx-auto max-w-7xl">
-        <div className="flex gap-8">
-          <ProfileSidebar activeTab={activeTab} onChange={setActiveTab} />
+    <>
+      <div className="min-h-screen bg-[#0A192F] px-6 py-10 text-white">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex gap-8">
+            <ProfileSidebar
+              activeTab={activeTab}
+              onChange={setActiveTab}
+              onLogoutClick={() => setShowLogoutModal(true)}
+            />
 
-          <section className="flex-1 rounded-[28px] bg-[#243847] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.2)]">
-            <ProfileHeader title={sectionTitle} />
-            {renderTabContent()}
-          </section>
+            <section className="flex-1 rounded-[28px] bg-[#243847] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.2)]">
+              <ProfileHeader title={sectionTitle} />
+              {renderTabContent()}
+            </section>
+          </div>
         </div>
       </div>
-    </div>
+
+      <Modal
+        open={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        title="Log out"
+        description="Are you sure you want to log out of your account?"
+        primaryButtonText="Log out"
+        secondaryButtonText="Cancel"
+        onPrimaryClick={handleLogout}
+        onSecondaryClick={() => setShowLogoutModal(false)}
+      />
+    </>
   )
 }
 

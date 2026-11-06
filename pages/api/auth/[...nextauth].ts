@@ -59,7 +59,12 @@ export const authOptions = {
             username,
             email,
             provider: { name: provider, providerId },
-            settings: { defaultTimer: 60, autofillSessionName: false },
+            settings: {
+              defaultTimer: 60,
+              autofillSessionName: false,
+              replaceTopicOnTimeout: false,
+              allowOvertime: false,
+            },
           })
           const saved = await newUser.save()
           console.log('New user saved:', saved._id)

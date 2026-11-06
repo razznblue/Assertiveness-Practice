@@ -45,6 +45,7 @@ export interface SessionInputProps {
   type?: 'text' | 'number'
   max?: number
   className?: string
+  disabled?: boolean
 }
 
 export interface ActionItem {
@@ -69,6 +70,13 @@ export interface MyInformationTabProps {
   email?: string | null
 }
 
+export interface UserSettings {
+  defaultTimer?: number
+  autofillSessionName?: boolean
+  replaceTopicOnTimeout?: boolean
+  allowOvertime?: boolean
+}
+
 export interface PlaceholderTabProps {
   title: string
 }
@@ -89,9 +97,14 @@ export interface AudioRecorderProps {
   topic?: string
   topicImage?: string
   sessionName?: string
+  timerSeconds?: number
+  allowOvertime?: boolean
+  replaceTopicOnTimeout?: boolean
+  backLink?: string
   onSave?: (audioBlob: Blob) => void
   onRestart?: () => void
   onHome?: () => void
+  onTimeout?: () => void
 }
 
 export type SessionAction = 'save' | 'restart' | 'home'

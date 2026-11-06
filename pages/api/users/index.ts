@@ -5,6 +5,20 @@ import dbConnect from '@/db/dbConnect'
 import { UserModel } from '@/db/models'
 import { throw404 } from '@/helpers/APIHelper'
 
+const defaultSettings = {
+  defaultTimer: 60,
+  autofillSessionName: false,
+  replaceTopicOnTimeout: false,
+  allowOvertime: false,
+}
+
+const getUserSettings = (settings: any) => ({
+  defaultTimer: settings?.get('defaultTimer') ?? 60,
+  autofillSessionName: settings?.get('autofillSessionName') ?? false,
+  replaceTopicOnTimeout: settings?.get('replaceTopicOnTimeout') ?? false,
+  allowOvertime: settings?.get('allowOvertime') ?? false,
+})
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await dbConnect()
   const session = await getServerSession(req, res, authOptions)
@@ -33,6 +47,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       settings = {
         defaultTimer: 60,
         autofillSessionName: false,
+        replaceTopicOnTimeout: false,
+        allowOvertime: false,
       }
     }
 
@@ -72,14 +88,20 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       if (!user) {
         return throw404(res, `Player ${req?.query?.username} Does not have an account`)
       }
-      return res.json(user)
+      return res.json({
+        ...user.toObject(),
+        settings: { ...defaultSettings, ...(user.settings ?? {}) },
+      })
     } else if (req?.query?.username) {
       const user = await UserModel.findOne({ username: req?.query?.username })
       if (!user) {
         return throw404(res, `Player ${req?.query?.username} Does not have an account`)
       }
       res.setHeader('Content-Type', 'application/json')
-      return res.json(user)
+      return res.json({
+        ...user.toObject(),
+        settings: getUserSettings(user.settings),
+      })
     }
 
     if (!isAdmin) {

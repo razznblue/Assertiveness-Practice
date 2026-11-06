@@ -7,6 +7,26 @@ const ObjectId = require('mongoose').Types.ObjectId
 import { UserModel } from '@/db/models'
 import { handleUnexpectedError, throw404 } from '@/helpers/APIHelper'
 
+const defaultSettings = {
+  defaultTimer: 60,
+  autofillSessionName: false,
+  replaceTopicOnTimeout: false,
+  allowOvertime: false,
+}
+
+const getUserSettings = (settings: any) => {
+  const plainSettings = settings?.toObject
+    ? settings.toObject()
+    : settings ?? {}
+
+  return {
+    defaultTimer: plainSettings.defaultTimer ?? 60,
+    autofillSessionName: plainSettings.autofillSessionName ?? false,
+    replaceTopicOnTimeout: plainSettings.replaceTopicOnTimeout ?? false,
+    allowOvertime: plainSettings.allowOvertime ?? false,
+  }
+}
+
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await dbConnect()
   const session = await getServerSession(req, res, authOptions)
@@ -29,6 +49,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     if (!targetUser) {
       return throw404(res, `Player with ID ${id} does not exist`)
     }
+    console.log('Incoming settings:', req.body.settings)
+console.log('Existing settings:', targetUser.settings)
 
     // Non-admins can only access their own user
     if (!isAdmin && targetUser.username !== sessionUsername) {
@@ -48,37 +70,59 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             return res.status(403).json({ error: `Forbidden: cannot update field "${key}"` })
           }
 
-          if (targetUserRecord[key] !== undefined) {
-            if (key === 'settings') {
-              const settings = value as Record<string, unknown> | undefined
-              const nextSettings = { ...(targetUser.settings ?? {}) }
-
-              if (settings?.defaultTimer !== undefined) {
-                nextSettings.defaultTimer = settings.defaultTimer as number
-                updatedKeys.push(key)
-              }
-              if (settings?.autofillSessionName !== undefined) {
-                nextSettings.autofillSessionName = settings.autofillSessionName as boolean
-                updatedKeys.push(key)
-              }
-
-              targetUser.settings = nextSettings as typeof targetUser.settings
-            } else {
-              targetUserRecord[key] = value
-              updatedKeys.push(key)
+        if (key === 'settings' && typeof value === 'object' && value !== null) {
+            const currentSettings = {
+              defaultTimer: targetUser.settings?.defaultTimer ?? 60,
+              autofillSessionName: targetUser.settings?.autofillSessionName ?? false,
+              replaceTopicOnTimeout: targetUser.settings?.replaceTopicOnTimeout ?? false,
+              allowOvertime: targetUser.settings?.allowOvertime ?? false,
             }
+
+            const nextSettings = {
+              ...defaultSettings,
+              ...currentSettings,
+              ...value,
+            }
+
+            targetUser.settings = nextSettings
+
+            updatedKeys.push(key)
+          } else if (targetUserRecord[key] !== undefined) {
+            targetUserRecord[key] = value
+            updatedKeys.push(key)
           }
         }
+
+        console.log('Settings before save:', targetUser.settings)
+
         await targetUser.save()
+        console.log('Settings after save:', targetUser.settings)
+        const updatedUser = await UserModel.findById(id).lean()
+
+        console.log('Settings after save:', updatedUser?.settings)
         console.log('Updated player with fields: ', updatedKeys)
-        return res.send(targetUser)
+        return res.json({
+          ...updatedUser,
+          settings: {
+            ...defaultSettings,
+            ...(updatedUser?.settings ?? {}),
+          },
+        })
       } catch (err) {
         return handleUnexpectedError(res, err)
       }
 
       /* GET User */
     } else if (req.method === 'GET') {
-      return res.send(targetUser)
+      const userRecord = await UserModel.findById(id)
+
+      if (!userRecord) {
+        return throw404(res, `Player with ID ${id} does not exist`)
+      }
+
+      return res.status(200).json({
+        userRecord
+      })
     } else {
       return res.status(405).json({ error: 'Method Not Allowed' })
     }

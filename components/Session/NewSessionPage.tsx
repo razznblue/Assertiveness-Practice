@@ -16,8 +16,18 @@ const NewSessionPage = () => {
   const [topic, setTopic] = useState('')
   const [topicId, setTopicId] = useState<string | null>(null)
   const [timer, setTimer] = useState(60)
-  const [timerChecked, setTimerChecked] = useState(false)
+  const [defaultTimerForUser, setDefaultTimerForUser] = useState(60)
+  const [sessionTimerOverrideEnabled, setSessionTimerOverrideEnabled] = useState(false)
+  const [replaceTopicOnTimeout, setReplaceTopicOnTimeout] = useState(false)
+  const [allowOvertime, setAllowOvertime] = useState(false)
   const [isStarting, setIsStarting] = useState(false)
+
+  const querySessionName = typeof router.query.sessionName === 'string' ? router.query.sessionName : ''
+  const queryTopic = typeof router.query.topic === 'string' ? router.query.topic : ''
+  const queryTopicId = typeof router.query.topicId === 'string' ? router.query.topicId : null
+  const queryTimer = Number(router.query.timer)
+  const queryReplaceTopicOnTimeout = router.query.replaceTopicOnTimeout === 'true'
+  const queryAllowOvertime = router.query.allowOvertime === 'true'
 
   const generateSessionName = () => {
     const baseTopic = (topic || 'Practice').replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
@@ -77,6 +87,8 @@ const NewSessionPage = () => {
       const params = new URLSearchParams()
       if (resolvedTopicId) params.set('topicId', resolvedTopicId)
       params.set('timer', String(timer))
+      params.set('replaceTopicOnTimeout', String(replaceTopicOnTimeout))
+      params.set('allowOvertime', String(allowOvertime))
 
       await router.push(`/session/${encodeURIComponent(sessionName)}?${params.toString()}`)
     } catch (error) {
@@ -86,34 +98,53 @@ const NewSessionPage = () => {
     }
   }
 
-  const handleTimerChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleTimerChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextTimer = Number.isFinite(event.target.valueAsNumber) ? event.target.valueAsNumber : 60
     setTimer(nextTimer)
-
-    if (timerChecked && userId) {
-      await axios.patch(`/api/users/${userId}`, { settings: { defaultTimer: nextTimer } })
-    }
   }
 
-  const updateTimerPreference = async (event: ChangeEvent<HTMLInputElement>) => {
+  const updateSessionTimerOverride = (event: ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked
-    setTimerChecked(checked)
-    if (checked && !Number.isNaN(timer) && userId) {
-      await axios.patch(`/api/users/${userId}`, { settings: { defaultTimer: timer } })
+    setSessionTimerOverrideEnabled(checked)
+    if (!checked) {
+      setTimer(defaultTimerForUser)
     }
   }
 
   useEffect(() => {
+    if (!router.isReady) return
+
+    const nextTimerValue = Number.isFinite(queryTimer) && queryTimer > 0 ? queryTimer : null
+
+    if (querySessionName || queryTopic || queryTopicId || nextTimerValue !== null || queryReplaceTopicOnTimeout || queryAllowOvertime) {
+      setSessionName(querySessionName)
+      setTopic(queryTopic)
+      setTopicId(queryTopicId)
+      setTimer(nextTimerValue ?? 60)
+      setReplaceTopicOnTimeout(queryReplaceTopicOnTimeout)
+      setAllowOvertime(queryAllowOvertime)
+      setSessionTimerOverrideEnabled(nextTimerValue !== null)
+      return
+    }
+
     const fetchUserId = async () => {
       if (session?.user?.name) {
         const res = await axios.get(`/api/users?username=${session.user.name}`)
         setUserId(res?.data?._id)
-        setTimer(res?.data?.settings?.defaultTimer)
+
+        const nextTimer = Number(res?.data?.settings?.defaultTimer ?? 60)
+        const nextDefault = Number.isFinite(nextTimer) && nextTimer > 0 ? nextTimer : 60
+
+        setDefaultTimerForUser(nextDefault)
+        setTimer(nextDefault)
+        setSessionTimerOverrideEnabled(false)
+        setReplaceTopicOnTimeout(Boolean(res?.data?.settings?.replaceTopicOnTimeout))
+        setAllowOvertime(Boolean(res?.data?.settings?.allowOvertime))
       }
     }
 
     fetchUserId()
-  }, [session])
+  }, [router.isReady, querySessionName, queryTopic, queryTopicId, queryTimer, queryReplaceTopicOnTimeout, queryAllowOvertime, session])
 
   if (!session) {
     return (
@@ -146,14 +177,40 @@ const NewSessionPage = () => {
                 type="number"
                 max={120}
                 onChange={handleTimerChange}
-                className="w-1/2 rounded-md bg-gray p-1 px-2 text-black"
+                disabled={!sessionTimerOverrideEnabled}
+                className="w-1/2 rounded-md bg-gray p-1 px-2 text-black disabled:cursor-not-allowed disabled:opacity-50"
               />
             </SessionField>
 
+            <div className="w-full pb-1 pt-2 text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-300">
+              Session override settings
+            </div>
+
             <div className="setting flex w-full items-center justify-center pt-1 text-sm">
-              <p>Make this my default timer?</p>
+              <p>Use this timer for this session</p>
               <input
-                onChange={updateTimerPreference}
+                checked={sessionTimerOverrideEnabled}
+                onChange={updateSessionTimerOverride}
+                type="checkbox"
+                className="mx-2 rounded-md bg-gray"
+              />
+            </div>
+
+            <div className="setting flex w-full items-center justify-center pt-1 text-sm">
+              <p>Replace topic when time runs out</p>
+              <input
+                checked={replaceTopicOnTimeout}
+                onChange={(event) => setReplaceTopicOnTimeout(event.target.checked)}
+                type="checkbox"
+                className="mx-2 rounded-md bg-gray"
+              />
+            </div>
+
+            <div className="setting flex w-full items-center justify-center pt-1 text-sm">
+              <p>Allow recording to continue past the timer</p>
+              <input
+                checked={allowOvertime}
+                onChange={(event) => setAllowOvertime(event.target.checked)}
                 type="checkbox"
                 className="mx-2 rounded-md bg-gray"
               />

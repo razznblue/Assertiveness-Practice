@@ -20,12 +20,14 @@ export const SessionInput = ({
   type = 'text',
   max,
   className = 'w-1/2 rounded-md bg-gray p-1 px-2 text-black',
+  disabled = false,
 }: SessionInputProps) => (
   <input
     type={type}
     value={value}
     onChange={onChange}
     max={max}
+    disabled={disabled}
     className={className}
   />
 )

@@ -12,12 +12,25 @@ export class UserProvider {
 
 @modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false },  options: { customName: 'UserSettings' } })
 export class UserSettings {
-  @prop()
+  @prop({ default: 60 })
   public defaultTimer?: number
 
-  @prop()
+  @prop({ default: false })
   public autofillSessionName?: boolean
+
+  @prop({ default: false })
+  public replaceTopicOnTimeout?: boolean
+
+  @prop({ default: false })
+  public allowOvertime?: boolean
 }
+
+export const DEFAULT_USER_SETTINGS = {
+  defaultTimer: 60,
+  autofillSessionName: false,
+  replaceTopicOnTimeout: false,
+  allowOvertime: false,
+} as const
 
 @modelOptions({ schemaOptions: { collection: 'User', versionKey: false, timestamps: true },  options: { customName: 'User' } })
 class User {
@@ -36,7 +49,7 @@ class User {
   @prop()
   public provider: UserProvider
 
-  @prop()
+  @prop({ type: () => UserSettings, _id: false, default: () => ({ ...DEFAULT_USER_SETTINGS }) })
   public settings: UserSettings
 
   // @prop({ ref: () => PlayerStats })

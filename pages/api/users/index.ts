@@ -5,11 +5,36 @@ import dbConnect from '@/db/dbConnect'
 import { UserModel } from '@/db/models'
 import { throw404 } from '@/helpers/APIHelper'
 
-const getUserSettings = (settings: any) => ({
-  defaultTimer: settings?.get('defaultTimer') ?? 60,
-  autofillSessionName: settings?.get('autofillSessionName') ?? false,
-  replaceTopicOnTimeout: settings?.get('replaceTopicOnTimeout') ?? false,
-  allowOvertime: settings?.get('allowOvertime') ?? false,
+
+type UserSettingsSource = {
+  get?: (key: string) => string | number | boolean | undefined
+  defaultTimer?: number
+  autofillSessionName?: boolean
+  replaceTopicOnTimeout?: boolean
+  allowOvertime?: boolean
+}
+
+const readSetting = <T>(
+  settings: UserSettingsSource | undefined,
+  key: keyof UserSettingsSource,
+  fallback: T,
+): T => {
+  if (!settings) return fallback
+
+  if ('get' in settings && typeof settings.get === 'function') {
+    const value = settings.get(key as string)
+    if (value !== undefined) return value as T
+  }
+
+  const directValue = settings[key as keyof UserSettingsSource]
+  return directValue !== undefined ? (directValue as T) : fallback
+}
+
+const getUserSettings = (settings?: UserSettingsSource) => ({
+  defaultTimer: readSetting(settings, 'defaultTimer', 60),
+  autofillSessionName: readSetting(settings, 'autofillSessionName', false),
+  replaceTopicOnTimeout: readSetting(settings, 'replaceTopicOnTimeout', false),
+  allowOvertime: readSetting(settings, 'allowOvertime', false),
 })
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {

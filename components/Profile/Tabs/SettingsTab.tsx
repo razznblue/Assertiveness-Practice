@@ -18,33 +18,25 @@ const SettingsTab = () => {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    const fetchSettings = async () => {
+      if (!session?.user?.name) return
 
-    console.log('FETCH SETTINGS EFFECT RAN')
-const fetchSettings = async () => {
-  if (!session?.user?.name) return
+      try {
+        const res = await axios.get(`/api/users?username=${session.user.name}`)
 
-  console.log('Fetching settings from database...')
+        const nextSettings: UserSettings = {
+          defaultTimer: Number(res.data.settings?.defaultTimer ?? 60),
+          autofillSessionName: Boolean(res.data.settings?.autofillSessionName),
+          replaceTopicOnTimeout: Boolean(res.data.settings?.replaceTopicOnTimeout),
+          allowOvertime: Boolean(res.data.settings?.allowOvertime),
+        }
 
-  try {
-    const res = await axios.get(
-      `/api/users?username=${session.user.name}`
-    )
-
-    const nextSettings: UserSettings = {
-      defaultTimer: Number(res.data.settings?.defaultTimer ?? 60),
-      autofillSessionName: Boolean(res.data.settings?.autofillSessionName),
-      replaceTopicOnTimeout: Boolean(res.data.settings?.replaceTopicOnTimeout),
-      allowOvertime: Boolean(res.data.settings?.allowOvertime),
+        setUserId(res?.data?._id ?? null)
+        setSettings(nextSettings)
+      } catch (error) {
+        console.error('Failed to load user settings:', error)
+      }
     }
-
-    console.log('Settings received from API:', nextSettings)
-
-    setUserId(res?.data?._id ?? null)
-    setSettings(nextSettings)
-  } catch (error) {
-    console.error('Failed to load user settings:', error)
-  }
-}
 
     fetchSettings()
   }, [session?.user?.name])

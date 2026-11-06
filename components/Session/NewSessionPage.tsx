@@ -13,34 +13,39 @@ const NewSessionPage = () => {
   const { data: session } = useSession()
   const router = useRouter()
 
-  const [userId, setUserId] = useState<string | null>(null)
-  const [sessionName, setSessionName] = useState('')
-  const [topic, setTopic] = useState('')
-  const [topicId, setTopicId] = useState<string | null>(null)
-  const [timer, setTimer] = useState(60)
-  const [defaultTimerForUser, setDefaultTimerForUser] = useState(60)
-  const [sessionTimerOverrideEnabled, setSessionTimerOverrideEnabled] = useState(false)
-  const [replaceTopicOnTimeout, setReplaceTopicOnTimeout] = useState(false)
-  const [allowOvertime, setAllowOvertime] = useState(false)
-  const [autofillSessionName, setAutofillSessionName] = useState(false)
-  const [isStarting, setIsStarting] = useState(false)
-
   const querySessionName = typeof router.query.sessionName === 'string' ? router.query.sessionName : ''
   const queryTopic = typeof router.query.topic === 'string' ? router.query.topic : ''
   const queryTopicId = typeof router.query.topicId === 'string' ? router.query.topicId : null
   const queryTimer = Number(router.query.timer)
   const queryReplaceTopicOnTimeout = router.query.replaceTopicOnTimeout === 'true'
   const queryAllowOvertime = router.query.allowOvertime === 'true'
+  const queryTimerValue = Number.isFinite(queryTimer) && queryTimer > 0 ? queryTimer : null
+  const hasQueryOverrides = Boolean(
+    querySessionName || queryTopic || queryTopicId || queryTimerValue !== null || queryReplaceTopicOnTimeout || queryAllowOvertime,
+  )
 
-  const generateSessionName = () => {
+  const getGeneratedSessionName = () => {
     const adjectives = ['Bold', 'Collected', 'Calm', 'Confident', 'Focused', 'Strong', 'Steady', 'Clear', 'Brave']
     const nounPool = ['Practice', 'Session', 'Focus', 'Reset', 'Response', 'Progress', 'Moment', 'Flow']
 
     const adjective = adjectives[Math.floor(Math.random() * adjectives.length)]
     const noun = nounPool[Math.floor(Math.random() * nounPool.length)]
 
-    const displayName = `${adjective} ${noun} ${getFormattedDateTime()}`
-    setSessionName(displayName)
+    return `${adjective} ${noun} ${getFormattedDateTime()}`
+  }
+
+  const [sessionName, setSessionName] = useState(() => querySessionName || '')
+  const [topic, setTopic] = useState(() => queryTopic || '')
+  const [topicId, setTopicId] = useState<string | null>(() => queryTopicId)
+  const [timer, setTimer] = useState(() => queryTimerValue ?? 60)
+  const [defaultTimerForUser, setDefaultTimerForUser] = useState(60)
+  const [sessionTimerOverrideEnabled, setSessionTimerOverrideEnabled] = useState(() => queryTimerValue !== null)
+  const [replaceTopicOnTimeout, setReplaceTopicOnTimeout] = useState(() => queryReplaceTopicOnTimeout)
+  const [allowOvertime, setAllowOvertime] = useState(() => queryAllowOvertime)
+  const [isStarting, setIsStarting] = useState(false)
+
+  const generateSessionName = () => {
+    setSessionName(getGeneratedSessionName())
   }
 
   const setRandomTopic = async () => {
@@ -129,46 +134,36 @@ const NewSessionPage = () => {
   }
 
   useEffect(() => {
-    if (!router.isReady) return
+    if (!router.isReady || hasQueryOverrides || !session?.user?.name) return
 
-    const nextTimerValue = Number.isFinite(queryTimer) && queryTimer > 0 ? queryTimer : null
-
-    if (querySessionName || queryTopic || queryTopicId || nextTimerValue !== null || queryReplaceTopicOnTimeout || queryAllowOvertime) {
-      setSessionName(querySessionName)
-      setTopic(queryTopic)
-      setTopicId(queryTopicId)
-      setTimer(nextTimerValue ?? 60)
-      setReplaceTopicOnTimeout(queryReplaceTopicOnTimeout)
-      setAllowOvertime(queryAllowOvertime)
-      setSessionTimerOverrideEnabled(nextTimerValue !== null)
-      return
-    }
+    let isMounted = true
 
     const fetchUserId = async () => {
-      if (session?.user?.name) {
-        const res = await axios.get(`/api/users?username=${session.user.name}`)
-        setUserId(res?.data?._id)
+      const res = await axios.get(`/api/users?username=${session.user.name}`)
 
-        const nextTimer = Number(res?.data?.settings?.defaultTimer ?? 60)
-        const nextDefault = Number.isFinite(nextTimer) && nextTimer > 0 ? nextTimer : 60
+      if (!isMounted) return
 
-        setDefaultTimerForUser(nextDefault)
-        setTimer(nextDefault)
-        setSessionTimerOverrideEnabled(false)
-        setReplaceTopicOnTimeout(Boolean(res?.data?.settings?.replaceTopicOnTimeout))
-        setAllowOvertime(Boolean(res?.data?.settings?.allowOvertime))
-        setAutofillSessionName(Boolean(res?.data?.settings?.autofillSessionName))
+      const nextTimer = Number(res?.data?.settings?.defaultTimer ?? 60)
+      const nextDefault = Number.isFinite(nextTimer) && nextTimer > 0 ? nextTimer : 60
+      const nextAutofill = Boolean(res?.data?.settings?.autofillSessionName)
+
+      setDefaultTimerForUser(nextDefault)
+      setTimer(nextDefault)
+      setSessionTimerOverrideEnabled(false)
+      setReplaceTopicOnTimeout(Boolean(res?.data?.settings?.replaceTopicOnTimeout))
+      setAllowOvertime(Boolean(res?.data?.settings?.allowOvertime))
+
+      if (nextAutofill && !sessionName) {
+        setSessionName(getGeneratedSessionName())
       }
     }
 
     fetchUserId()
-  }, [router.isReady, querySessionName, queryTopic, queryTopicId, queryTimer, queryReplaceTopicOnTimeout, queryAllowOvertime, session])
 
-  useEffect(() => {
-    if (!router.isReady || !autofillSessionName || querySessionName || sessionName) return
-
-    generateSessionName()
-  }, [router.isReady, autofillSessionName, querySessionName, sessionName, topic])
+    return () => {
+      isMounted = false
+    }
+  }, [hasQueryOverrides, router.isReady, session?.user?.name, sessionName])
 
   if (!session) {
     return (

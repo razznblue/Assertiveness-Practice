@@ -84,14 +84,12 @@ const ProfilePage = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({})
 
-  useEffect(() => {
-    if (router.isReady && typeof router.query.tab === 'string') {
-      const nextTab = router.query.tab as ProfileTab
-      if (['My Progress', 'My Information', 'Achievements', 'Settings', 'Feedback', 'Practice Tips', 'Logout'].includes(nextTab)) {
-        setActiveTab(nextTab)
-      }
+  const handleTabChange = (nextTab: ProfileTab) => {
+    setActiveTab(nextTab)
+    if (router.isReady) {
+      void router.push({ pathname: router.pathname, query: { ...router.query, tab: nextTab } }, undefined, { shallow: true })
     }
-  }, [router.isReady, router.query.tab])
+  }
 
   useEffect(() => {
     if (!session?.user?.name) return
@@ -251,7 +249,7 @@ const ProfilePage = () => {
           <div className="flex gap-8">
             <ProfileSidebar
               activeTab={activeTab}
-              onChange={setActiveTab}
+              onChange={handleTabChange}
               onLogoutClick={() => setShowLogoutModal(true)}
             />
 

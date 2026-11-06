@@ -14,19 +14,6 @@ const defaultSettings = {
   allowOvertime: false,
 }
 
-const getUserSettings = (settings: any) => {
-  const plainSettings = settings?.toObject
-    ? settings.toObject()
-    : settings ?? {}
-
-  return {
-    defaultTimer: plainSettings.defaultTimer ?? 60,
-    autofillSessionName: plainSettings.autofillSessionName ?? false,
-    replaceTopicOnTimeout: plainSettings.replaceTopicOnTimeout ?? false,
-    allowOvertime: plainSettings.allowOvertime ?? false,
-  }
-}
-
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await dbConnect()
   const session = await getServerSession(req, res, authOptions)

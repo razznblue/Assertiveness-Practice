@@ -17,7 +17,7 @@ const FeedbackTab = () => {
 
       setMessage('')
       alert('Thanks for your feedback!')
-    } catch (error) {
+    } catch {
       alert('Could not send feedback. Please try again.')
     } finally {
       setIsSubmitting(false)

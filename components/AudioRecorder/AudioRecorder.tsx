@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 
 import Button from '@/components/Button/Button'
@@ -44,6 +44,31 @@ const AudioRecorder = ({
   const audioChunksRef = useRef<Blob[]>([])
   const timeoutTriggeredRef = useRef(false)
 
+  const stopRecording = useCallback((autoStop = false) => {
+    if (!mediaRecorder.current || mediaRecorder.current.state === 'inactive') {
+      setRecordingStatus('stopped')
+      return
+    }
+
+    setRecordingStatus('stopped')
+    mediaRecorder.current.stop()
+    mediaRecorder.current.onstop = () => {
+      const blob = new Blob(audioChunksRef.current, { type: mimeType })
+      const url = URL.createObjectURL(blob)
+      setAudio(url)
+      setAudioBlob(blob)
+      setAudioChunks([])
+      audioChunksRef.current = []
+
+      if (autoStop && replaceTopicOnTimeout && onTimeout) {
+        onTimeout()
+        return
+      }
+
+      setShowModal(true)
+    }
+  }, [onTimeout, replaceTopicOnTimeout])
+
   useEffect(() => {
     if (recordingStatus !== 'recording') {
       if (timerRef.current) {
@@ -76,7 +101,7 @@ const AudioRecorder = ({
         timerRef.current = null
       }
     }
-  }, [allowOvertime, recordingStatus, timerSeconds])
+  }, [allowOvertime, recordingStatus, stopRecording, timerSeconds])
 
   useEffect(() => {
     audioChunksRef.current = audioChunks
@@ -135,31 +160,6 @@ const AudioRecorder = ({
       }
     }
     mediaRecorder.current.start()
-  }
-
-  const stopRecording = (autoStop = false) => {
-    if (!mediaRecorder.current || mediaRecorder.current.state === 'inactive') {
-      setRecordingStatus('stopped')
-      return
-    }
-
-    setRecordingStatus('stopped')
-    mediaRecorder.current.stop()
-    mediaRecorder.current.onstop = () => {
-      const blob = new Blob(audioChunksRef.current, { type: mimeType })
-      const url = URL.createObjectURL(blob)
-      setAudio(url)
-      setAudioBlob(blob)
-      setAudioChunks([])
-      audioChunksRef.current = []
-
-      if (autoStop && replaceTopicOnTimeout && onTimeout) {
-        onTimeout()
-        return
-      }
-
-      setShowModal(true)
-    }
   }
 
   const handleAction = (action: SessionAction) => {

@@ -17,7 +17,7 @@ const normalizeAvatarSource = (value?: string | null) => {
 
 const MyInformationTab = ({ name, email, avatarImgUrl }: MyInformationTabProps) => {
   const { data: session } = useSession()
-  const [avatarUrl, setAvatarUrl] = useState(normalizeAvatarSource(avatarImgUrl))
+  const [avatarUrl, setAvatarUrl] = useState(defaultAvatarImg)
   const [userId, setUserId] = useState<string | undefined>()
   const [showEditAvatarModal, setShowEditAvatarModal] = useState(false)
 
@@ -28,17 +28,17 @@ const MyInformationTab = ({ name, email, avatarImgUrl }: MyInformationTabProps) 
       try {
         const res = await axios.get(`/api/users?username=${encodeURIComponent(session.user.name)}`)
         const nextUserId = res?.data?._id
-        const nextAvatarUrl = normalizeAvatarSource(res?.data?.avatarImgUrl || avatarImgUrl || session.user.image || defaultAvatarImg)
+        const nextAvatarUrl = normalizeAvatarSource(res?.data?.avatarImgUrl || avatarImgUrl || defaultAvatarImg)
 
         setUserId(nextUserId)
         setAvatarUrl(nextAvatarUrl)
       } catch {
-        setAvatarUrl(normalizeAvatarSource(avatarImgUrl || session.user.image || defaultAvatarImg))
+        setAvatarUrl(normalizeAvatarSource(avatarImgUrl || defaultAvatarImg))
       }
     }
 
     void loadAvatar()
-  }, [avatarImgUrl, session?.user?.image, session?.user?.name])
+  }, [avatarImgUrl, session?.user?.name])
 
   const details = [
     { label: 'Name', value: name || 'Not provided' },

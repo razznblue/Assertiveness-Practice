@@ -50,17 +50,17 @@ const EditAvatarModal = ({ open, userId, currentAvatarUrl, onClose, onSaved }: E
   useEffect(() => {
     if (!open) return
 
-    const fetchTopics = async () => {
-      setIsLoading(true)
-      try {
-        const res = await axios.get('/api/topics')
-        const topicNames = Array.isArray(res?.data)
-          ? res.data
-              .map((topic: { name?: string } | null) => topic?.name)
-              .filter((name): name is string => Boolean(name && name.trim()))
-          : []
+  const fetchTopics = async () => {
+    setIsLoading(true)
+    try {
+      const res = await axios.get('/api/topics')
+      const topicNames = Array.isArray(res?.data)
+        ? res.data
+            .map((topic: { name?: string } | null) => topic?.name)
+            .filter((name): name is string => Boolean(name && name.trim()))
+        : []
 
-        setTopics(topicNames)
+      setTopics(topicNames)
       const generatedAvatar = generateAvatarWithSeed(topicNames)
       const nextHistory = currentAvatarUrl ? [{ svg: currentAvatarUrl, seed: '' }, generatedAvatar] : [generatedAvatar]
       setAvatarHistory(nextHistory.slice(-3))

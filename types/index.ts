@@ -31,7 +31,7 @@ export interface HistoryRecording {
   recordingUrl?: string
 }
 
-export type ProfileTab = 'My Progress' | 'My Information' | 'Achievements' | 'Settings' | 'Feedback' | 'Practice Tips' | 'Logout'
+export type ProfileTab = 'My Progress' | 'My Information' | 'My Library' | 'Achievements' | 'Settings' | 'Feedback' | 'Practice Tips' | 'Logout'
 
 export interface SessionFieldProps {
   label: string

@@ -54,10 +54,14 @@ const generateAvatarSeed = (topics: string[] = []) => {
   return randomItem(formats)()
 }
 
-export const generateAvatar = (topics: string[] = []) => {
-  const avatar = new Avatar(style, {
-    seed: generateAvatarSeed(topics),
-  })
+export const generateAvatarWithSeed = (topics: string[] = [], seedOverride?: string) => {
+  const seed = seedOverride ?? generateAvatarSeed(topics)
+  const avatar = new Avatar(style, { seed })
 
-  return avatar.toString()
+  return {
+    seed,
+    svg: avatar.toString(),
+  }
 }
+
+export const generateAvatar = (topics: string[] = []) => generateAvatarWithSeed(topics).svg

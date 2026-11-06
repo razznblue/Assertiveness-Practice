@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import axios from 'axios'
 
 import Modal from '@/components/Modal/Modal'
-import { generateAvatar } from '@/util/avatar/avatar'
+import { generateAvatarWithSeed } from '@/util/avatar/avatar'
 
 interface EditAvatarModalProps {
   open: boolean
@@ -17,14 +18,34 @@ const svgToDataUri = (svg: string) => {
   return `data:image/svg+xml;charset=utf-8,${encoded}`
 }
 
+const dataUriToSvg = (value: string) => {
+  if (!value.startsWith('data:image/svg+xml')) return value
+
+  try {
+    const encoded = value.replace(/^data:image\/svg\+xml(;charset=utf-8)?;base64,/, '')
+    if (encoded === value) {
+      return decodeURIComponent(value.replace(/^data:image\/svg\+xml;charset=utf-8,/, ''))
+    }
+
+    return atob(encoded)
+  } catch {
+    return value
+  }
+}
+
+const isDataUri = (value: string) => value.startsWith('data:image/svg+xml')
+
 const EditAvatarModal = ({ open, userId, currentAvatarUrl, onClose, onSaved }: EditAvatarModalProps) => {
   const [topics, setTopics] = useState<string[]>([])
-  const [avatarHistory, setAvatarHistory] = useState<string[]>(() => (currentAvatarUrl ? [currentAvatarUrl] : []))
+  const [avatarHistory, setAvatarHistory] = useState<Array<{ svg: string; seed: string }>>(() =>
+    currentAvatarUrl ? [{ svg: currentAvatarUrl, seed: '' }] : [],
+  )
   const [avatarIndex, setAvatarIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  const previewSvg = avatarHistory[avatarIndex] ?? ''
+  const previewEntry = avatarHistory[avatarIndex] ?? { svg: '', seed: '' }
+  const previewSvg = previewEntry.svg
 
   useEffect(() => {
     if (!open) return
@@ -40,66 +61,77 @@ const EditAvatarModal = ({ open, userId, currentAvatarUrl, onClose, onSaved }: E
           : []
 
         setTopics(topicNames)
-        const initialAvatar = generateAvatar(topicNames)
-        setAvatarHistory([initialAvatar])
-        setAvatarIndex(0)
-      } catch (error) {
-        console.error('Failed to load topics for avatar generation:', error)
-        const fallbackAvatar = generateAvatar()
-        setAvatarHistory([fallbackAvatar])
-        setAvatarIndex(0)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    void fetchTopics()
-  }, [open])
-
-  const generateNewAvatar = () => {
-    const nextAvatar = generateAvatar(topics)
-
-    const nextHistory = [...avatarHistory, nextAvatar].slice(-5)
-
-    setAvatarHistory(nextHistory)
-    setAvatarIndex(nextHistory.length - 1)
-  }
-
-  // const generateNewAvatar = () => {
-  //   const nextAvatar = generateAvatar(topics)
-
-  //   setAvatarHistory((prev) => {
-  //     const nextHistory = [...prev, nextAvatar].slice(-3)
-  //     setAvatarIndex(nextHistory.length - 1)
-  //     return nextHistory
-  //   })
-  // }
-
-  const handleGoBack = () => {
-    setAvatarIndex((prev) => Math.max(prev - 1, 0))
-  }
-
-  const handleGoForward = () => {
-    setAvatarIndex((prev) => Math.min(prev + 1, avatarHistory.length - 1))
-  }
-
-  const handleSave = async () => {
-    if (!userId || !previewSvg) return
-
-    setIsSaving(true)
-
-    try {
-      const dataUrl = svgToDataUri(previewSvg)
-      await axios.patch(`/api/users/${userId}`, { avatarImgUrl: dataUrl })
-      onSaved(dataUrl)
-      onClose()
+      const generatedAvatar = generateAvatarWithSeed(topicNames)
+      const nextHistory = currentAvatarUrl ? [{ svg: currentAvatarUrl, seed: '' }, generatedAvatar] : [generatedAvatar]
+      setAvatarHistory(nextHistory.slice(-3))
+      setAvatarIndex(currentAvatarUrl ? 1 : 0)
     } catch (error) {
-      console.error('Failed to save avatar:', error)
-      alert('Could not save avatar. Please try again.')
+      console.error('Failed to load topics for avatar generation:', error)
+      const fallbackAvatar = generateAvatarWithSeed()
+      const nextHistory = currentAvatarUrl ? [{ svg: currentAvatarUrl, seed: '' }, fallbackAvatar] : [fallbackAvatar]
+      setAvatarHistory(nextHistory.slice(-3))
+      setAvatarIndex(currentAvatarUrl ? 1 : 0)
     } finally {
-      setIsSaving(false)
+      setIsLoading(false)
     }
   }
+
+  void fetchTopics()
+}, [currentAvatarUrl, open])
+
+const generateNewAvatar = () => {
+  const nextAvatar = generateAvatarWithSeed(topics)
+
+  setAvatarHistory((prev) => {
+    const nextHistory = [...prev, nextAvatar].slice(-3)
+    setAvatarIndex(nextHistory.length - 1)
+    return nextHistory
+  })
+}
+
+const handleGoBack = () => {
+  setAvatarIndex((prev) => Math.max(prev - 1, 0))
+}
+
+const handleGoForward = () => {
+  setAvatarIndex((prev) => Math.min(prev + 1, avatarHistory.length - 1))
+}
+
+const handleSave = async () => {
+  if (!userId || !previewSvg) return
+
+  setIsSaving(true)
+
+  try {
+    const rawSvg = isDataUri(previewSvg) ? dataUriToSvg(previewSvg) : previewSvg
+    const dataUrl = svgToDataUri(rawSvg)
+    await axios.patch(`/api/users/${userId}`, { avatarImgUrl: dataUrl })
+    onSaved(dataUrl)
+    onClose()
+  } catch (error) {
+    console.error('Failed to save avatar:', error)
+    alert('Could not save avatar. Please try again.')
+  } finally {
+    setIsSaving(false)
+  }
+}
+
+const handleAddToLibrary = async () => {
+  if (!userId || !previewSvg) return
+
+  try {
+    const userRes = await axios.get(`/api/users/${userId}`)
+    const existingLibrary = userRes?.data?.userRecord?.library?.userAvatars ?? []
+    const cleanSvg = isDataUri(previewSvg) ? dataUriToSvg(previewSvg) : previewSvg
+
+    const nextLibrary = [...existingLibrary, { avatarSvg: cleanSvg, seed: previewEntry.seed ?? '' }]
+    await axios.patch(`/api/users/${userId}`, { library: { userAvatars: nextLibrary } })
+    alert('Avatar added to your library.')
+  } catch (error) {
+    console.error('Failed to save avatar to library:', error)
+    alert('Could not add avatar to your library. Please try again.')
+  }
+}
 
   return (
     <Modal
@@ -128,36 +160,57 @@ const EditAvatarModal = ({ open, userId, currentAvatarUrl, onClose, onSaved }: E
 
           <div className="flex h-40 w-40 items-center justify-center overflow-hidden rounded-full border-2 border-[#4ec7b4] bg-[#1f2f3d] shadow-lg shadow-black/20">
             {previewSvg ? (
-              <div
-                className="h-full w-full"
-                dangerouslySetInnerHTML={{ __html: previewSvg }}
-              />
+              isDataUri(previewSvg) ? (
+                <Image
+                  src={previewSvg}
+                  alt="Current avatar preview"
+                  width={160}
+                  height={160}
+                  className="h-full w-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div
+                  className="h-full w-full"
+                  dangerouslySetInnerHTML={{ __html: previewSvg }}
+                />
+              )
             ) : (
               <span className="text-sm text-slate-300">Loading...</span>
             )}
           </div>
 
-          {
+          {avatarIndex < avatarHistory.length - 1 && (
             <button
               type="button"
               aria-label="Next avatar"
               onClick={handleGoForward}
-              disabled={avatarIndex >= avatarHistory.length - 1}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-[#243847] text-xl text-white transition hover:bg-[#304d64] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-[#243847] text-xl text-white transition hover:bg-[#304d64]"
             >
               →
             </button>
-          }
+          )}
         </div>
 
-        <button
-          type="button"
-          onClick={generateNewAvatar}
-          disabled={isLoading || isSaving}
-          className="rounded-xl bg-[#243847] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#304d64] disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isLoading ? 'Generating...' : 'Generate new avatar'}
-        </button>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={generateNewAvatar}
+            disabled={isLoading || isSaving}
+            className="rounded-xl bg-[#243847] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#304d64] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isLoading ? 'Generating...' : 'Generate new avatar'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleAddToLibrary}
+            disabled={isSaving || !userId || !previewSvg}
+            className="rounded-xl bg-[#4ec7b4] px-4 py-2 text-sm font-semibold text-[#0A192F] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Add To Library
+          </button>
+        </div>
       </div>
     </Modal>
   )

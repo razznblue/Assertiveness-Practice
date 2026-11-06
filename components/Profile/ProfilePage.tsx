@@ -9,11 +9,12 @@ import { ChevronIcon } from '@/components/Icons'
 import MyInformationTab from '@/components/Profile/Tabs/MyInformationTab'
 import MyProgressTab from '@/components/Profile/Tabs/MyProgressTab'
 import FeedbackTab from '@/components/Profile/Tabs/FeedbackTab'
+import PracticeTipsTab from '@/components/Profile/Tabs/PracticeTipsTab'
 import SettingsTab from '@/components/Profile/Tabs/SettingsTab'
 import PlaceholderTab from '@/components/Profile/Tabs/PlaceholderTab'
 import type { HistoryItem, HistoryRecording, HistorySession, ProfileTab } from '@/types'
 
-const tabs = ['My Progress', 'My Information', 'Achievements', 'Settings', 'Feedback', 'Logout'] as const
+const tabs = ['My Progress', 'My Information', 'Achievements', 'Settings', 'Feedback', 'Practice Tips', 'Logout'] as const
 
 const ProfileSidebar = ({
   activeTab,
@@ -72,7 +73,7 @@ const ProfilePage = () => {
   const router = useRouter()
   const initialTab =
     typeof router.query.tab === 'string' &&
-    ['My Progress', 'My Information', 'Achievements', 'Settings', 'Feedback', 'Logout'].includes(router.query.tab)
+    ['My Progress', 'My Information', 'Achievements', 'Settings', 'Feedback', 'Practice Tips', 'Logout'].includes(router.query.tab)
       ? (router.query.tab as ProfileTab)
       : 'My Progress'
 
@@ -86,7 +87,7 @@ const ProfilePage = () => {
   useEffect(() => {
     if (router.isReady && typeof router.query.tab === 'string') {
       const nextTab = router.query.tab as ProfileTab
-      if (['My Progress', 'My Information', 'Achievements', 'Settings', 'Feedback', 'Logout'].includes(nextTab)) {
+      if (['My Progress', 'My Information', 'Achievements', 'Settings', 'Feedback', 'Practice Tips', 'Logout'].includes(nextTab)) {
         setActiveTab(nextTab)
       }
     }
@@ -214,6 +215,8 @@ const ProfilePage = () => {
         return <MyInformationTab name={session?.user?.name} email={session?.user?.email} />
       case 'Feedback':
         return <FeedbackTab />
+      case 'Practice Tips':
+        return <PracticeTipsTab />
       case 'Achievements':
         return <PlaceholderTab title="Achievements" />
       case 'Settings':

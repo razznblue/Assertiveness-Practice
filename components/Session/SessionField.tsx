@@ -17,6 +17,7 @@ export const SessionField = ({ label, children, helperText, onHelperClick }: Ses
 export const SessionInput = ({
   value,
   onChange,
+  onKeyDown,
   type = 'text',
   max,
   className = 'w-1/2 rounded-md bg-gray p-1 px-2 text-black',
@@ -26,6 +27,7 @@ export const SessionInput = ({
     type={type}
     value={value}
     onChange={onChange}
+    onKeyDown={onKeyDown}
     max={max}
     disabled={disabled}
     className={className}

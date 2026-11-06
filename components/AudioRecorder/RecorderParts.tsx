@@ -29,24 +29,31 @@ export const RecorderArtwork = ({
   topicImage,
   recordingStatus,
   recordingTime,
+  timerSeconds,
+  allowOvertime = false,
   formatTime,
-}: RecorderArtworkProps) => (
-  <div className={styles['ar-image-wrapper']}>
-    <Image loading="eager" src={topicImage} alt={topic} width={800} height={400} />
-    <div
-      className={clsx(
-        styles['ar-image-overlay'],
-        recordingStatus === 'recording' && styles.visible
-      )}
-    >
-      <div className={styles['ar-recording-indicator']}>
-        <div className={styles['ar-rec-dot']} />
-        <span className={styles['ar-rec-label']}>Recording</span>
-        <span className={styles['ar-rec-time']}>{formatTime(recordingTime)}</span>
+}: RecorderArtworkProps) => {
+  const overflowSeconds = Math.max(0, recordingTime - timerSeconds)
+  const displayTime = allowOvertime && overflowSeconds > 0 ? `+${formatTime(overflowSeconds)}` : formatTime(Math.max(0, timerSeconds - recordingTime))
+
+  return (
+    <div className={styles['ar-image-wrapper']}>
+      <Image loading="eager" src={topicImage} alt={topic} width={800} height={400} />
+      <div
+        className={clsx(
+          styles['ar-image-overlay'],
+          recordingStatus === 'recording' && styles.visible
+        )}
+      >
+        <div className={styles['ar-recording-indicator']}>
+          <div className={styles['ar-rec-dot']} />
+          <span className={styles['ar-rec-label']}>Recording</span>
+          <span className={styles['ar-rec-time']}>{displayTime}</span>
+        </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 export const AudioPlayback = ({ audio, audioRef }: AudioPlaybackProps) => (
   <div className={styles['ar-audio-bar']}>

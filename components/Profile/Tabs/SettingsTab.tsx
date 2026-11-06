@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ChangeEvent, type KeyboardEvent } from 'react'
 import axios from 'axios'
 import { useSession } from 'next-auth/react'
 
@@ -61,6 +61,33 @@ const fetchSettings = async () => {
     }))
   }
 
+  const handleDefaultTimerChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const rawValue = event.target.value
+
+    if (rawValue === '') {
+      updateSetting('defaultTimer', 0)
+      return
+    }
+
+    const nextTimer = Number(rawValue)
+    if (!Number.isFinite(nextTimer)) return
+
+    updateSetting('defaultTimer', Math.min(Math.max(nextTimer, 0), 180))
+  }
+
+  const handleDefaultTimerKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Backspace' && (settings.defaultTimer ?? 0) === 0) {
+      event.preventDefault()
+      updateSetting('defaultTimer', 0)
+      return
+    }
+
+    if (event.key >= '0' && event.key <= '9' && (settings.defaultTimer ?? 0) === 0) {
+      event.preventDefault()
+      updateSetting('defaultTimer', Number(event.key))
+    }
+  }
+
   useEffect(() => {
     console.log('Settings state updated:', settings)
   }, [settings])
@@ -100,13 +127,14 @@ const saveSettings = async () => {
 
         <div className="space-y-4">
           <label className="flex items-center justify-between gap-4">
-            <span className="text-base text-white">Default session timer</span>
+            <span className="text-base text-white">Default session timer (In seconds)</span>
             <input
               type="number"
               min={15}
               max={180}
-              value={settings.defaultTimer ?? 60}
-              onChange={(event) => updateSetting('defaultTimer', Number(event.target.value) || 60)}
+              value={settings.defaultTimer ?? 0}
+              onChange={handleDefaultTimerChange}
+              onKeyDown={handleDefaultTimerKeyDown}
               className="w-24 rounded-md border border-white/10 bg-[#1f2f3d] px-3 py-2 text-right text-white"
             />
           </label>

@@ -1,3 +1,4 @@
+import type * as React from 'react'
 import { useEffect, useState, type ChangeEvent } from 'react'
 import Image from 'next/image'
 import axios from 'axios'
@@ -5,6 +6,7 @@ import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
 
 import { SessionField, SessionInput } from '@/components/Session/SessionField'
+import { getFormattedDateTime } from '@/util/functions'
 import type { TopicConflictError } from '@/types'
 
 const NewSessionPage = () => {
@@ -20,6 +22,7 @@ const NewSessionPage = () => {
   const [sessionTimerOverrideEnabled, setSessionTimerOverrideEnabled] = useState(false)
   const [replaceTopicOnTimeout, setReplaceTopicOnTimeout] = useState(false)
   const [allowOvertime, setAllowOvertime] = useState(false)
+  const [autofillSessionName, setAutofillSessionName] = useState(false)
   const [isStarting, setIsStarting] = useState(false)
 
   const querySessionName = typeof router.query.sessionName === 'string' ? router.query.sessionName : ''
@@ -30,21 +33,13 @@ const NewSessionPage = () => {
   const queryAllowOvertime = router.query.allowOvertime === 'true'
 
   const generateSessionName = () => {
-    const baseTopic = (topic || 'Practice').replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
-    const cleanedTopic = baseTopic
-      .split(' ')
-      .filter(Boolean)
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ')
-
-    const adjectives = ['Bold', 'Calm', 'Confident', 'Focused', 'Strong', 'Steady', 'Clear', 'Brave']
+    const adjectives = ['Bold', 'Collected', 'Calm', 'Confident', 'Focused', 'Strong', 'Steady', 'Clear', 'Brave']
     const nounPool = ['Practice', 'Session', 'Focus', 'Reset', 'Response', 'Progress', 'Moment', 'Flow']
 
     const adjective = adjectives[Math.floor(Math.random() * adjectives.length)]
     const noun = nounPool[Math.floor(Math.random() * nounPool.length)]
-    const finalTopic = cleanedTopic || noun
 
-    const displayName = `${adjective} ${finalTopic}`
+    const displayName = `${adjective} ${noun} ${getFormattedDateTime()}`
     setSessionName(displayName)
   }
 
@@ -99,8 +94,30 @@ const NewSessionPage = () => {
   }
 
   const handleTimerChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextTimer = Number.isFinite(event.target.valueAsNumber) ? event.target.valueAsNumber : 60
-    setTimer(nextTimer)
+    const rawValue = event.target.value
+
+    if (rawValue === '') {
+      setTimer(0)
+      return
+    }
+
+    const nextTimer = Number(rawValue)
+    if (!Number.isFinite(nextTimer)) return
+
+    setTimer(Math.min(Math.max(nextTimer, 0), 120))
+  }
+
+  const handleTimerKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Backspace' && timer === 0) {
+      event.preventDefault()
+      setTimer(0)
+      return
+    }
+
+    if (event.key >= '0' && event.key <= '9' && timer === 0) {
+      event.preventDefault()
+      setTimer(Number(event.key))
+    }
   }
 
   const updateSessionTimerOverride = (event: ChangeEvent<HTMLInputElement>) => {
@@ -140,11 +157,18 @@ const NewSessionPage = () => {
         setSessionTimerOverrideEnabled(false)
         setReplaceTopicOnTimeout(Boolean(res?.data?.settings?.replaceTopicOnTimeout))
         setAllowOvertime(Boolean(res?.data?.settings?.allowOvertime))
+        setAutofillSessionName(Boolean(res?.data?.settings?.autofillSessionName))
       }
     }
 
     fetchUserId()
   }, [router.isReady, querySessionName, queryTopic, queryTopicId, queryTimer, queryReplaceTopicOnTimeout, queryAllowOvertime, session])
+
+  useEffect(() => {
+    if (!router.isReady || !autofillSessionName || querySessionName || sessionName) return
+
+    generateSessionName()
+  }, [router.isReady, autofillSessionName, querySessionName, sessionName, topic])
 
   if (!session) {
     return (
@@ -177,6 +201,7 @@ const NewSessionPage = () => {
                 type="number"
                 max={120}
                 onChange={handleTimerChange}
+                onKeyDown={handleTimerKeyDown}
                 disabled={!sessionTimerOverrideEnabled}
                 className="w-1/2 rounded-md bg-gray p-1 px-2 text-black disabled:cursor-not-allowed disabled:opacity-50"
               />
@@ -187,7 +212,7 @@ const NewSessionPage = () => {
             </div>
 
             <div className="setting flex w-full items-center justify-center pt-1 text-sm">
-              <p>Use this timer for this session</p>
+              <p>Use custom timer for this session</p>
               <input
                 checked={sessionTimerOverrideEnabled}
                 onChange={updateSessionTimerOverride}
@@ -228,8 +253,8 @@ const NewSessionPage = () => {
           </button>
           <button
             type="button"
-            className={`rounded-md bg-primary px-4 py-2 font-bold text-black ${isStarting || !sessionName ? 'cursor-not-allowed opacity-50' : ''}`}
-            disabled={isStarting || !sessionName}
+            className={`rounded-md bg-primary px-4 py-2 font-bold text-black ${isStarting || !sessionName || timer <= 0 ? 'cursor-not-allowed opacity-50' : ''}`}
+            disabled={isStarting || !sessionName || timer <= 0}
             onClick={handleStartClick}
           >
             {isStarting ? 'Starting...' : 'Start'}

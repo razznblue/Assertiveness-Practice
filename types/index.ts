@@ -1,3 +1,4 @@
+import type * as React from 'react'
 import type { ComponentPropsWithoutRef, ChangeEvent, ReactNode, RefObject } from 'react'
 
 export interface HistoryItem {
@@ -30,7 +31,7 @@ export interface HistoryRecording {
   recordingUrl?: string
 }
 
-export type ProfileTab = 'My Progress' | 'My Information' | 'Achievements' | 'Settings' | 'Feedback' | 'Logout'
+export type ProfileTab = 'My Progress' | 'My Information' | 'Achievements' | 'Settings' | 'Feedback' | 'Practice Tips' | 'Logout'
 
 export interface SessionFieldProps {
   label: string
@@ -42,6 +43,7 @@ export interface SessionFieldProps {
 export interface SessionInputProps {
   value: string | number
   onChange: (event: ChangeEvent<HTMLInputElement>) => void
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void
   type?: 'text' | 'number'
   max?: number
   className?: string
@@ -149,6 +151,8 @@ export interface RecorderArtworkProps {
   topicImage: string
   recordingStatus: RecordingStatus
   recordingTime: number
+  timerSeconds: number
+  allowOvertime?: boolean
   formatTime: (value: number) => string
 }
 

@@ -192,6 +192,8 @@ const AudioRecorder = ({
             topicImage={topicImage}
             recordingStatus={recordingStatus}
             recordingTime={recordingTime}
+            timerSeconds={timerSeconds}
+            allowOvertime={allowOvertime}
             formatTime={formatTime}
           />
 

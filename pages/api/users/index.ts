@@ -5,13 +5,6 @@ import dbConnect from '@/db/dbConnect'
 import { UserModel } from '@/db/models'
 import { throw404 } from '@/helpers/APIHelper'
 
-const defaultSettings = {
-  defaultTimer: 60,
-  autofillSessionName: false,
-  replaceTopicOnTimeout: false,
-  allowOvertime: false,
-}
-
 const getUserSettings = (settings: any) => ({
   defaultTimer: settings?.get('defaultTimer') ?? 60,
   autofillSessionName: settings?.get('autofillSessionName') ?? false,
@@ -90,7 +83,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       }
       return res.json({
         ...user.toObject(),
-        settings: { ...defaultSettings, ...(user.settings ?? {}) },
+        settings: getUserSettings(user.settings),
       })
     } else if (req?.query?.username) {
       const user = await UserModel.findOne({ username: req?.query?.username })

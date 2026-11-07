@@ -1,59 +1,35 @@
 import { ReactNode, useEffect, useRef, useState } from 'react'
+import { useSession, signIn, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import Image from 'next/image'
-import axios from 'axios'
-import { useSession, signIn, signOut } from 'next-auth/react'
 
 import { BrandDividerIcon } from '@/components/Icons'
-import { defaultAvatarImg } from '@/util/constants'
+import { useUserDetails } from '@/hooks/useUserDetails'
 
 const normalizeAvatarSource = (value?: string | null) => {
-  if (!value) return defaultAvatarImg
-  if (value.trim().startsWith('<svg')) {
-    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(value)}`
+  if (!value) return null
+
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  if (trimmed.startsWith('<svg')) {
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(trimmed)}`
   }
-  return value
+
+  return trimmed
 }
 
 export function Layout({ children }: { children: ReactNode }) {
   const { data: session } = useSession()
-  const [dbProfileImage, setDbProfileImage] = useState<string | null>(null)
+  const { user: userDetails } = useUserDetails(session?.user?.name)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
   const lineColor = '#dfdfdf'
   const profileImage = normalizeAvatarSource(
-    session ? (dbProfileImage || session.user.image || defaultAvatarImg) : defaultAvatarImg,
+    session
+      ? userDetails?.avatarImgUrl || session.user.image || null
+      : null
   )
-
-  useEffect(() => {
-    if (!session?.user?.name) {
-      return
-    }
-
-    let isMounted = true
-
-    const loadProfileImage = async () => {
-      try {
-        const res = await axios.get(`/api/users?username=${encodeURIComponent(session.user.name)}`)
-        const nextAvatar = normalizeAvatarSource(res?.data?.avatarImgUrl || session.user.image || defaultAvatarImg)
-
-        if (isMounted) {
-          setDbProfileImage(nextAvatar)
-        }
-      } catch {
-        if (isMounted) {
-          setDbProfileImage(normalizeAvatarSource(session.user.image || defaultAvatarImg))
-        }
-      }
-    }
-
-    void loadProfileImage()
-
-    return () => {
-      isMounted = false
-    }
-  }, [session?.user?.image, session?.user?.name])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -130,14 +106,18 @@ export function Layout({ children }: { children: ReactNode }) {
                       onClick={() => setMenuOpen((current) => !current)}
                       className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-[#1b2e3f] shadow-md shadow-black/20 transition hover:border-[#4ec7b4]"
                     >
-                      <Image
-                        src={profileImage}
-                        alt="Profile"
-                        width={44}
-                        height={44}
-                        className="h-full w-full object-cover"
-                        unoptimized={profileImage.startsWith('data:') || profileImage.startsWith('blob:')}
-                      />
+                      {profileImage ? (
+                        <Image
+                          src={profileImage}
+                          alt="Profile"
+                          width={44}
+                          height={44}
+                          className="h-full w-full object-cover"
+                          unoptimized={profileImage.startsWith('data:') || profileImage.startsWith('blob:')}
+                        />
+                      ) : (
+                        <div className="h-full w-full animate-pulse bg-[#243847]" />
+                      )}
                     </button>
 
                     {menuOpen && (

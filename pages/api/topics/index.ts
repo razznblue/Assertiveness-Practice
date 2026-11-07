@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next'
+import axios from 'axios'
+
 import dbConnect from '@/db/dbConnect'
 import { TopicModel } from '@/db/models'
-import axios from 'axios'
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await dbConnect()

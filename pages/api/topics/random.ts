@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
+
 import dbConnect from '@/db/dbConnect'
 import { TopicModel } from '@/db/models'
 

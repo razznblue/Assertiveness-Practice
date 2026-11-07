@@ -1,7 +1,9 @@
 import { useEffect, useState, type ChangeEvent, type KeyboardEvent } from 'react'
-import axios from 'axios'
 import { useSession } from 'next-auth/react'
+import axios from 'axios'
 
+import Modal from '@/components/Modal/Modal'
+import { useUserDetails } from '@/hooks/useUserDetails'
 import type { UserSettings } from '@/types'
 
 const defaultSettings: UserSettings = {
@@ -13,33 +15,25 @@ const defaultSettings: UserSettings = {
 
 const SettingsTab = () => {
   const { data: session } = useSession()
-  const [userId, setUserId] = useState<string | null>(null)
+  const { user, refresh } = useUserDetails(session?.user?.name)
   const [settings, setSettings] = useState<UserSettings>(defaultSettings)
   const [saving, setSaving] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    const fetchSettings = async () => {
-      if (!session?.user?.name) return
+    if (!user?.settings) return
 
-      try {
-        const res = await axios.get(`/api/users?username=${session.user.name}`)
-
-        const nextSettings: UserSettings = {
-          defaultTimer: Number(res.data.settings?.defaultTimer ?? 60),
-          autofillSessionName: Boolean(res.data.settings?.autofillSessionName),
-          replaceTopicOnTimeout: Boolean(res.data.settings?.replaceTopicOnTimeout),
-          allowOvertime: Boolean(res.data.settings?.allowOvertime),
-        }
-
-        setUserId(res?.data?._id ?? null)
-        setSettings(nextSettings)
-      } catch (error) {
-        console.error('Failed to load user settings:', error)
-      }
+    const nextSettings: UserSettings = {
+      defaultTimer: Number(user.settings?.defaultTimer ?? 60),
+      autofillSessionName: Boolean(user.settings?.autofillSessionName),
+      replaceTopicOnTimeout: Boolean(user.settings?.replaceTopicOnTimeout),
+      allowOvertime: Boolean(user.settings?.allowOvertime),
     }
 
-    fetchSettings()
-  }, [session?.user?.name])
+    setSettings(nextSettings)
+  }, [user?.settings])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const updateSetting = <K extends keyof UserSettings>(
     key: K,
@@ -85,14 +79,14 @@ const SettingsTab = () => {
   }, [settings])
 
 const saveSettings = async () => {
-  if (!userId || !session?.user?.name) return
+  if (!user?._id || !session?.user?.name) return
 
   setSaving(true)
 
   try {
     console.log('Settings being sent:', JSON.stringify(settings))
 
-    const res = await axios.patch(`/api/users/${userId}`, {
+    await axios.patch(`/api/users/${user?._id}`, {
       settings: {
         defaultTimer: settings.defaultTimer,
         autofillSessionName: settings.autofillSessionName,
@@ -101,8 +95,8 @@ const saveSettings = async () => {
       },
     })
 
-    console.log('Settings PATCH response:', res.data)
-
+    await refresh(true)
+    setShowSuccessModal(true)
   } catch (error) {
     console.error('Failed to save settings:', error)
   } finally {
@@ -166,11 +160,21 @@ const saveSettings = async () => {
       <button
         type="button"
         onClick={saveSettings}
-        disabled={!userId || saving}
+        disabled={!user?._id || saving}
         className="rounded-xl bg-[#4ec7b4] px-5 py-3 font-semibold text-[#0A192F] transition disabled:cursor-not-allowed disabled:opacity-60"
       >
         {saving ? 'Saving...' : 'Save settings'}
       </button>
+
+      <Modal
+        open={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="Settings saved"
+        description="Your changes were saved successfully."
+        primaryButtonText="Done"
+        primaryButtonClassName="bg-[#4ec7b4] text-[#0A192F]"
+        onPrimaryClick={() => setShowSuccessModal(false)}
+      />
     </div>
   )
 }

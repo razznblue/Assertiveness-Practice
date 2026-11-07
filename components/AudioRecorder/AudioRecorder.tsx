@@ -4,8 +4,6 @@ import clsx from 'clsx'
 import Button from '@/components/Button/Button'
 import Modal from '@/components/Modal'
 import { BackArrowIcon, CheckIcon, ClockIcon, HomeIcon, MicIcon, ResetIcon, SaveIcon } from '@/components/Icons'
-import type { AudioRecorderProps, SessionAction, RecordingStatus } from '@/types'
-import styles from '@/styles/Audio.module.css'
 import {
   AudioPlayback,
   RecorderArtwork,
@@ -14,6 +12,8 @@ import {
   StartRecordingButton,
   StopRecordingButton,
 } from './RecorderParts'
+import styles from '@/styles/Audio.module.css'
+import type { AudioRecorderProps, SessionAction, RecordingStatus } from '@/types'
 
 const mimeType = 'audio/webm'
 

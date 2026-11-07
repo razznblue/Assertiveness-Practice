@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
+
 import dbConnect from '@/db/dbConnect'
 import { userIsAdmin } from '@/helpers/APIHelper'
 import { UserModel } from '@/db/models'

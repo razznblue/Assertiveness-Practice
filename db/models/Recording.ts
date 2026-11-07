@@ -1,5 +1,6 @@
 import * as typegoose from '@typegoose/typegoose'
 import { modelOptions, prop } from '@typegoose/typegoose'
+
 import Session from './Session'
 import User from './User'
 

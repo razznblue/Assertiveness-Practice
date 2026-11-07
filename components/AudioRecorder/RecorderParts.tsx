@@ -8,13 +8,13 @@ import {
   StopIcon,
   TopicIcon,
 } from '@/components/Icons'
+import styles from '@/styles/Audio.module.css'
 import type {
   AudioPlaybackProps,
   RecorderActionButtonProps,
   RecorderArtworkProps,
   RecorderHeaderProps
 } from '@/types'
-import styles from '@/styles/Audio.module.css'
 
 export const RecorderHeader = ({ topic, sessionName }: RecorderHeaderProps) => (
   <div className={styles['ar-topic-header']}>

@@ -11,6 +11,27 @@ export const getFormattedDateTime = () => {
   return `${year}${month}${day}${hours}${minutes}${seconds}`
 }
 
+/* SVG */
+export const svgToDataUri = (svg: string) => {
+  const encoded = encodeURIComponent(svg)
+  return `data:image/svg+xml;charset=utf-8,${encoded}`
+}
+
+export const dataUriToSvg = (value: string) => {
+  if (!value.startsWith('data:image/svg+xml')) return value
+
+  try {
+    const encoded = value.replace(/^data:image\/svg\+xml(;charset=utf-8)?;base64,/, '')
+    if (encoded === value) {
+      return decodeURIComponent(value.replace(/^data:image\/svg\+xml;charset=utf-8,/, ''))
+    }
+
+    return atob(encoded)
+  } catch {
+    return value
+  }
+}
+
 export const generateRandomString = (length: number): string => {
   const charset =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_-+={}[]|'

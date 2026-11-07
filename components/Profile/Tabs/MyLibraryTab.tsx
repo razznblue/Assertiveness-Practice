@@ -1,64 +1,39 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
 import { useSession } from 'next-auth/react'
+import axios from 'axios'
 
 import Modal from '@/components/Modal/Modal'
-
-interface UserLibraryAvatar {
-  avatarSvg?: string
-  seed?: string
-}
-
-const svgToDataUri = (svg: string) => {
-  const encoded = encodeURIComponent(svg)
-  return `data:image/svg+xml;charset=utf-8,${encoded}`
-}
+import { useUserDetails } from '@/hooks/useUserDetails'
+import { svgToDataUri } from '@/util/functions'
+import { UserLibraryAvatar } from '@/types'
 
 const MyLibraryTab = () => {
   const { data: session } = useSession()
+  const { user, loading: userLoading, refresh } = useUserDetails(session?.user?.name)
   const [avatars, setAvatars] = useState<UserLibraryAvatar[]>([])
-  const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | undefined>()
   const [removeTarget, setRemoveTarget] = useState<UserLibraryAvatar | null>(null)
 
   const librarySections = [{ id: 'avatar-collection', title: 'Avatar Collection' }]
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (!session?.user?.name) {
+    if (!user) {
+      setAvatars([])
+      setUserId(undefined)
       return
     }
 
-    let isMounted = true
+    const savedAvatars = Array.isArray(user.library?.userAvatars)
+      ? user.library.userAvatars
+      : Array.isArray((user as Record<string, unknown>).userAvatars)
+        ? ((user as Record<string, unknown>).userAvatars as UserLibraryAvatar[])
+        : []
 
-    const loadLibrary = async () => {
-      try {
-        const res = await axios.get(`/api/users?username=${encodeURIComponent(session.user.name)}`)
-        const userRecord = res?.data?.userRecord ?? res?.data ?? {}
-        const currentUserId = userRecord?._id
-        const savedAvatars = Array.isArray(userRecord?.library?.userAvatars)
-          ? userRecord.library.userAvatars
-          : Array.isArray(userRecord?.userAvatars)
-            ? userRecord.userAvatars
-            : []
-
-        if (!isMounted) return
-
-        setUserId(currentUserId)
-        setAvatars(savedAvatars)
-      } catch (error) {
-        console.error('Failed to load avatar library:', error)
-        if (isMounted) setAvatars([])
-      } finally {
-        if (isMounted) setLoading(false)
-      }
-    }
-
-    void loadLibrary()
-
-    return () => {
-      isMounted = false
-    }
-  }, [session?.user?.name])
+    setUserId(user._id)
+    setAvatars(savedAvatars)
+  }, [user])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const equipAvatar = async (avatar: UserLibraryAvatar) => {
     if (!userId || !avatar.avatarSvg) return
@@ -67,10 +42,9 @@ const MyLibraryTab = () => {
 
     try {
       await axios.patch(`/api/users/${userId}`, { avatarImgUrl: avatarDataUri })
-      alert('Avatar equipped successfully.')
+      await refresh(true)
     } catch (error) {
       console.error('Failed to equip avatar:', error)
-      alert('Could not equip this avatar. Please try again.')
     }
   }
 
@@ -80,6 +54,7 @@ const MyLibraryTab = () => {
     try {
       const remaining = avatars.filter((avatar) => avatar.avatarSvg !== removeTarget.avatarSvg || avatar.seed !== removeTarget.seed)
       await axios.patch(`/api/users/${userId}`, { library: { userAvatars: remaining } })
+      await refresh(true)
       setAvatars(remaining)
       setRemoveTarget(null)
     } catch (error) {
@@ -101,7 +76,7 @@ const MyLibraryTab = () => {
             </div>
           </div>
 
-          {loading ? (
+          {userLoading ? (
             <div className="text-slate-300">Loading avatars...</div>
           ) : avatars.length === 0 ? (
             <div className="rounded-xl border border-dashed border-white/10 bg-[#1f2f3d] p-5 text-slate-300">
@@ -109,38 +84,58 @@ const MyLibraryTab = () => {
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {avatars.map((avatar, index) => (
-                <div
-                  key={`${avatar.seed ?? 'seed'}-${index}`}
-                  className="group relative rounded-2xl border border-white/10 bg-[#1f2f3d] p-3 text-center"
-                  title={avatar.seed ? `Seed: ${avatar.seed}` : 'No seed available'}
-                >
-                  <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-[#4ec7b4] bg-[#0a192f] mx-auto">
-                    <div
-                      className="h-full w-full"
-                      dangerouslySetInnerHTML={{ __html: avatar.avatarSvg ?? '' }}
-                    />
-                  </div>
+              {avatars.map((avatar, index) => {
+                const avatarDataUri = avatar.avatarSvg ? svgToDataUri(avatar.avatarSvg) : null
+                const isActive = Boolean(user?.avatarImgUrl && avatarDataUri && user.avatarImgUrl === avatarDataUri)
 
-                  <div className="mt-4 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => equipAvatar(avatar)}
-                      className="flex-1 rounded-xl bg-[#4ec7b4] px-3 py-2 text-sm font-semibold text-[#0A192F] transition hover:brightness-110"
-                    >
-                      Equip
-                    </button>
+                return (
+                  <div
+                    key={`${avatar.seed ?? 'seed'}-${index}`}
+                    className={`group relative rounded-2xl border p-3 text-center transition ${
+                      isActive
+                        ? 'border-[#4ec7b4] bg-[#1f2f3d] shadow-[0_0_0_2px_rgba(78,199,180,0.25)]'
+                        : 'border-white/10 bg-[#1f2f3d]'
+                    }`}
+                    title={avatar.seed ? `Seed: ${avatar.seed}` : 'No seed available'}
+                  >
+                    {isActive && (
+                      <span className="absolute right-3 top-3 rounded-full border border-[#4ec7b4] bg-[#4ec7b4]/10 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[#4ec7b4]">
+                        Active
+                      </span>
+                    )}
 
-                    <button
-                      type="button"
-                      onClick={() => setRemoveTarget(avatar)}
-                      className="rounded-xl border border-red-400/60 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/20"
-                    >
-                      Remove
-                    </button>
+                    <div className="mx-auto mt-2 flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-[#4ec7b4] bg-[#0a192f]">
+                      <div
+                        className="h-full w-full"
+                        dangerouslySetInnerHTML={{ __html: avatar.avatarSvg ?? '' }}
+                      />
+                    </div>
+
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => equipAvatar(avatar)}
+                        disabled={isActive}
+                        className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                          isActive
+                            ? 'cursor-default bg-[#4ec7b4]/10 text-[#9ae7db] opacity-90'
+                            : 'bg-[#4ec7b4] text-[#0A192F] hover:brightness-110'
+                        }`}
+                      >
+                        {isActive ? 'Active' : 'Equip'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setRemoveTarget(avatar)}
+                        className="rounded-xl border border-red-400/60 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/20"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

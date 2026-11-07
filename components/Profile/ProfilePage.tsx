@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import axios from 'axios'
-import { signOut, useSession } from 'next-auth/react'
 
 import Modal from '@/components/Modal'
 import { ChevronIcon } from '@/components/Icons'
@@ -69,16 +69,19 @@ const ProfileHeader = ({ title }: { title: string }) => (
   </div>
 )
 
-const ProfilePage = () => {
-  const { data: session } = useSession()
-  const router = useRouter()
-  const initialTab =
-    typeof router.query.tab === 'string' &&
-    ['My Progress', 'My Information', 'My Library', 'Achievements', 'Settings', 'Feedback', 'Practice Tips', 'Logout'].includes(router.query.tab)
-      ? (router.query.tab as ProfileTab)
-      : 'My Progress'
+const getProfileTabFromQuery = (tabValue: string | string[] | undefined): ProfileTab => {
+  if (typeof tabValue === 'string' &&
+    ['My Progress', 'My Information', 'My Library', 'Achievements', 'Settings', 'Feedback', 'Practice Tips', 'Logout'].includes(tabValue)) {
+    return tabValue as ProfileTab
+  }
 
-  const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab)
+  return 'My Progress'
+}
+
+const ProfilePage = () => {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const activeTab = getProfileTabFromQuery(router.query.tab)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -86,7 +89,6 @@ const ProfilePage = () => {
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({})
 
   const handleTabChange = (nextTab: ProfileTab) => {
-    setActiveTab(nextTab)
     if (router.isReady) {
       void router.push({ pathname: router.pathname, query: { ...router.query, tab: nextTab } }, undefined, { shallow: true })
     }
@@ -225,6 +227,46 @@ const ProfilePage = () => {
       default:
         return <PlaceholderTab title="Profile" />
     }
+  }
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-[#0A192F] px-6 py-10 text-white">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex gap-8">
+            <aside className="w-[350px] rounded-[28px] bg-[#1b2e3f] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.2)] opacity-80">
+              <div className="space-y-5">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div
+                    key={`sidebar-skeleton-${index}`}
+                    className="h-16 animate-pulse rounded-xl bg-white/5"
+                  />
+                ))}
+              </div>
+            </aside>
+
+            <section className="flex-1 rounded-[28px] bg-[#243847] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.2)]">
+              <div className="mb-8 flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="h-10 w-48 animate-pulse rounded-xl bg-white/10" />
+                <div className="h-14 w-14 animate-pulse rounded-xl bg-white/10" />
+              </div>
+
+              <div className="flex min-h-[320px] items-center justify-center">
+                <div className="flex items-center gap-4">
+                  {[0, 1, 2].map((index) => (
+                    <span
+                      key={`loading-bubble-${index}`}
+                      className="h-4 w-4 rounded-full bg-[#4ec7b4] animate-pulse"
+                      style={{ animationDelay: `${index * 150}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!session) {

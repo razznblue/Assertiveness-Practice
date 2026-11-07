@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { NextApiRequest, NextApiResponse } from 'next'
+const ObjectId = require('mongoose').Types.ObjectId
+
 import dbConnect from '@/db/dbConnect'
 import { TopicModel } from '@/db/models'
-const ObjectId = require('mongoose').Types.ObjectId
 import { throw404 } from '@/helpers/APIHelper'
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {

@@ -1,5 +1,4 @@
 import { modelOptions, prop } from '@typegoose/typegoose'
-import { defaultAvatarImg } from '@/util/constants'
 
 @modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false },  options: { customName: 'UserAvatars' } })
 export class UserAvatars {
@@ -55,7 +54,7 @@ class User {
   @prop({ required: true })
   public email: string
 
-  @prop({ default: defaultAvatarImg })
+  @prop({ default: '' })
   public avatarImgUrl: string
 
   @prop({ default: false })

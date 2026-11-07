@@ -3,43 +3,31 @@ import Image from 'next/image'
 import axios from 'axios'
 
 import Modal from '@/components/Modal/Modal'
+import { syncUserDetails } from '@/hooks/useUserDetails'
 import { generateAvatarWithSeed } from '@/util/avatar/avatar'
-
-interface EditAvatarModalProps {
-  open: boolean
-  userId?: string
-  currentAvatarUrl?: string
-  onClose: () => void
-  onSaved: (nextAvatarUrl: string) => void
-}
-
-const svgToDataUri = (svg: string) => {
-  const encoded = encodeURIComponent(svg)
-  return `data:image/svg+xml;charset=utf-8,${encoded}`
-}
-
-const dataUriToSvg = (value: string) => {
-  if (!value.startsWith('data:image/svg+xml')) return value
-
-  try {
-    const encoded = value.replace(/^data:image\/svg\+xml(;charset=utf-8)?;base64,/, '')
-    if (encoded === value) {
-      return decodeURIComponent(value.replace(/^data:image\/svg\+xml;charset=utf-8,/, ''))
-    }
-
-    return atob(encoded)
-  } catch {
-    return value
-  }
-}
+import { svgToDataUri, dataUriToSvg } from '@/util/functions'
+import { EditAvatarModalProps } from '@/types'
 
 const isDataUri = (value: string) => value.startsWith('data:image/svg+xml')
 
+const normalizeAvatarSource = (value?: string | null) => {
+  if (!value) return ''
+
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  if (trimmed.startsWith('<svg')) {
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(trimmed)}`
+  }
+
+  return trimmed
+}
+
 const EditAvatarModal = ({ open, userId, currentAvatarUrl, onClose, onSaved }: EditAvatarModalProps) => {
   const [topics, setTopics] = useState<string[]>([])
-  const [avatarHistory, setAvatarHistory] = useState<Array<{ svg: string; seed: string }>>(() =>
-    currentAvatarUrl ? [{ svg: currentAvatarUrl, seed: '' }] : [],
-  )
+  const [avatarHistory, setAvatarHistory] = useState<Array<{ svg: string; seed: string }>>(() => {
+    const normalized = normalizeAvatarSource(currentAvatarUrl)
+    return normalized ? [{ svg: normalized, seed: '' }] : []
+  })
   const [avatarIndex, setAvatarIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -62,15 +50,17 @@ const EditAvatarModal = ({ open, userId, currentAvatarUrl, onClose, onSaved }: E
 
       setTopics(topicNames)
       const generatedAvatar = generateAvatarWithSeed(topicNames)
-      const nextHistory = currentAvatarUrl ? [{ svg: currentAvatarUrl, seed: '' }, generatedAvatar] : [generatedAvatar]
+      const normalizedCurrentAvatar = normalizeAvatarSource(currentAvatarUrl)
+      const nextHistory = normalizedCurrentAvatar ? [{ svg: normalizedCurrentAvatar, seed: '' }, generatedAvatar] : [generatedAvatar]
       setAvatarHistory(nextHistory.slice(-3))
-      setAvatarIndex(currentAvatarUrl ? 1 : 0)
+      setAvatarIndex(normalizedCurrentAvatar ? 1 : 0)
     } catch (error) {
       console.error('Failed to load topics for avatar generation:', error)
       const fallbackAvatar = generateAvatarWithSeed()
-      const nextHistory = currentAvatarUrl ? [{ svg: currentAvatarUrl, seed: '' }, fallbackAvatar] : [fallbackAvatar]
+      const normalizedCurrentAvatar = normalizeAvatarSource(currentAvatarUrl)
+      const nextHistory = normalizedCurrentAvatar ? [{ svg: normalizedCurrentAvatar, seed: '' }, fallbackAvatar] : [fallbackAvatar]
       setAvatarHistory(nextHistory.slice(-3))
-      setAvatarIndex(currentAvatarUrl ? 1 : 0)
+      setAvatarIndex(normalizedCurrentAvatar ? 1 : 0)
     } finally {
       setIsLoading(false)
     }
@@ -105,7 +95,11 @@ const handleSave = async () => {
   try {
     const rawSvg = isDataUri(previewSvg) ? dataUriToSvg(previewSvg) : previewSvg
     const dataUrl = svgToDataUri(rawSvg)
-    await axios.patch(`/api/users/${userId}`, { avatarImgUrl: dataUrl })
+    const res = await axios.patch(`/api/users/${userId}`, { avatarImgUrl: dataUrl })
+    const nextUser = res?.data ?? null
+    if (nextUser?.username) {
+      syncUserDetails(nextUser.username, nextUser)
+    }
     onSaved(dataUrl)
     onClose()
   } catch (error) {
@@ -125,7 +119,11 @@ const handleAddToLibrary = async () => {
     const cleanSvg = isDataUri(previewSvg) ? dataUriToSvg(previewSvg) : previewSvg
 
     const nextLibrary = [...existingLibrary, { avatarSvg: cleanSvg, seed: previewEntry.seed ?? '' }]
-    await axios.patch(`/api/users/${userId}`, { library: { userAvatars: nextLibrary } })
+    const res = await axios.patch(`/api/users/${userId}`, { library: { userAvatars: nextLibrary } })
+    const nextUser = res?.data ?? null
+    if (nextUser?.username) {
+      syncUserDetails(nextUser.username, nextUser)
+    }
     alert('Avatar added to your library.')
   } catch (error) {
     console.error('Failed to save avatar to library:', error)

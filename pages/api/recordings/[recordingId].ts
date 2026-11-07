@@ -2,8 +2,9 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../auth/[...nextauth]'
-import dbConnect from '@/db/dbConnect'
 const ObjectId = require('mongoose').Types.ObjectId
+
+import dbConnect from '@/db/dbConnect'
 import { RecordingModel } from '@/db/models'
 import { throw404 } from '@/helpers/APIHelper'
 

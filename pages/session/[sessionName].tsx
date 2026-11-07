@@ -1,10 +1,10 @@
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
+import axios from 'axios'
+
 import AudioRecorder from '@/components/AudioRecorder/AudioRecorder'
 import Modal from '@/components/Modal'
-import axios from 'axios'
-import { useEffect, useState, useRef } from 'react'
-
 import { CheckIcon } from '@/components/Icons'
 
 export default function SessionScreen() {

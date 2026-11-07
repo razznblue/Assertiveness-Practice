@@ -5,34 +5,8 @@ import axios from 'axios'
 import Modal from '@/components/Modal/Modal'
 import { syncUserDetails } from '@/hooks/useUserDetails'
 import { generateAvatarWithSeed } from '@/util/avatar/avatar'
-
-interface EditAvatarModalProps {
-  open: boolean
-  userId?: string
-  currentAvatarUrl?: string
-  onClose: () => void
-  onSaved: (nextAvatarUrl: string) => void
-}
-
-const svgToDataUri = (svg: string) => {
-  const encoded = encodeURIComponent(svg)
-  return `data:image/svg+xml;charset=utf-8,${encoded}`
-}
-
-const dataUriToSvg = (value: string) => {
-  if (!value.startsWith('data:image/svg+xml')) return value
-
-  try {
-    const encoded = value.replace(/^data:image\/svg\+xml(;charset=utf-8)?;base64,/, '')
-    if (encoded === value) {
-      return decodeURIComponent(value.replace(/^data:image\/svg\+xml;charset=utf-8,/, ''))
-    }
-
-    return atob(encoded)
-  } catch {
-    return value
-  }
-}
+import { svgToDataUri, dataUriToSvg } from '@/util/functions'
+import { EditAvatarModalProps } from '@/types'
 
 const isDataUri = (value: string) => value.startsWith('data:image/svg+xml')
 

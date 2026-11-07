@@ -3,10 +3,10 @@ import mongoose from 'mongoose'
 import { NextApiRequest, NextApiResponse } from 'next'
 import formidable from 'formidable'
 import { getServerSession } from 'next-auth'
+import { authOptions } from '@/pages/api/auth/[...nextauth]'
 
 import dbConnect from '@/db/dbConnect'
 import { RecordingModel, SessionModel, UserModel } from '@/db/models'
-import { authOptions } from '@/pages/api/auth/[...nextauth]'
 import {
   deleteAudioFromR2,
   extractKeyFromUrl,

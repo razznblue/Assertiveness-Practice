@@ -80,6 +80,31 @@ export interface UserSettings {
   allowOvertime?: boolean
 }
 
+export interface UserLibraryAvatar {
+  avatarSvg?: string
+  seed?: string
+}
+
+export interface UserDetails {
+  _id?: string
+  username?: string | null
+  email?: string | null
+  avatarImgUrl?: string | null
+  settings?: Partial<UserSettings>
+  library?: {
+    userAvatars?: UserLibraryAvatar[]
+  }
+  [key: string]: unknown
+}
+
+export interface EditAvatarModalProps {
+  open: boolean
+  userId?: string
+  currentAvatarUrl?: string
+  onClose: () => void
+  onSaved: (nextAvatarUrl: string) => void
+}
+
 export interface PlaceholderTabProps {
   title: string
 }

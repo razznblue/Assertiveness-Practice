@@ -1,19 +1,11 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
 import { useSession } from 'next-auth/react'
+import axios from 'axios'
 
 import Modal from '@/components/Modal/Modal'
 import { useUserDetails } from '@/hooks/useUserDetails'
-
-interface UserLibraryAvatar {
-  avatarSvg?: string
-  seed?: string
-}
-
-const svgToDataUri = (svg: string) => {
-  const encoded = encodeURIComponent(svg)
-  return `data:image/svg+xml;charset=utf-8,${encoded}`
-}
+import { svgToDataUri } from '@/util/functions'
+import { UserLibraryAvatar } from '@/types'
 
 const MyLibraryTab = () => {
   const { data: session } = useSession()

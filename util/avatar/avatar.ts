@@ -1,5 +1,6 @@
 import { Style, Avatar } from '@dicebear/core';
 import avataaars from '@dicebear/styles/avataaars.json' with { type: 'json' };
+
 import words from './words';
 
 // Chosen Dicebear Style Set for the app. (Can change or support more styles later)

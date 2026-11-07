@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 
-import type { ModalProps } from '@/types'
 import styles from '@/styles/Audio.module.css'
+import type { ModalProps } from '@/types'
 
 export default function Modal({
   open,

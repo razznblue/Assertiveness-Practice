@@ -1,8 +1,9 @@
-import { UserModel } from '@/db/models'
-import dbConnect from '@/db/dbConnect'
+import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../pages/api/auth/[...nextauth]'
-import { NextApiRequest, NextApiResponse } from 'next'
+
+import { UserModel } from '@/db/models'
+import dbConnect from '@/db/dbConnect'
 
 /* Used to protect API routes */
 export const authorizeSession = async (

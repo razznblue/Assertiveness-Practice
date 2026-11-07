@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react'
+import { useSession, signIn, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useSession, signIn, signOut } from 'next-auth/react'
 
 import { BrandDividerIcon } from '@/components/Icons'
 import { useUserDetails } from '@/hooks/useUserDetails'

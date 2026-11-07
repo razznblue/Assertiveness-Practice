@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import axios from 'axios'
-import { signOut, useSession } from 'next-auth/react'
 
 import Modal from '@/components/Modal'
 import { ChevronIcon } from '@/components/Icons'

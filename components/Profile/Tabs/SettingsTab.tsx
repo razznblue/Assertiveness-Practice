@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type KeyboardEvent } from 'react'
-import axios from 'axios'
 import { useSession } from 'next-auth/react'
+import axios from 'axios'
 
 import Modal from '@/components/Modal/Modal'
 import { useUserDetails } from '@/hooks/useUserDetails'

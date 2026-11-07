@@ -1,9 +1,9 @@
 import type * as React from 'react'
 import { useEffect, useState, type ChangeEvent } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/router'
 import Image from 'next/image'
 import axios from 'axios'
-import { useRouter } from 'next/router'
-import { useSession } from 'next-auth/react'
 
 import { SessionField, SessionInput } from '@/components/Session/SessionField'
 import { useUserDetails } from '@/hooks/useUserDetails'

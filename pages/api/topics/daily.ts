@@ -1,5 +1,5 @@
-import { createHash } from 'crypto'
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { createHash } from 'crypto'
 
 import dbConnect from '@/db/dbConnect'
 import { TopicModel } from '@/db/models'

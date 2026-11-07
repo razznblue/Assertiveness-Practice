@@ -1,24 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 
-import type { UserSettings } from '@/types'
-
-export interface UserLibraryEntry {
-  avatarSvg?: string
-  seed?: string
-}
-
-export interface UserDetails {
-  _id?: string
-  username?: string | null
-  email?: string | null
-  avatarImgUrl?: string | null
-  settings?: Partial<UserSettings>
-  library?: {
-    userAvatars?: UserLibraryEntry[]
-  }
-  [key: string]: unknown
-}
+import type { UserDetails } from '@/types'
 
 const userDetailsCache = new Map<string, Promise<UserDetails | null>>()
 const userDetailsStore = new Map<string, UserDetails | null>()

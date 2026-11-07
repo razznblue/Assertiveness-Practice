@@ -2,6 +2,7 @@ import type { ReactElement, ReactNode } from 'react'
 import type { NextPage } from 'next'
 import { AppProps } from 'next/app'
 import { SessionProvider } from 'next-auth/react'
+
 import { Layout } from '@/components'
 import '@/styles/global.css'
 

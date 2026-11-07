@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import axios from 'axios'
-import topics from '@/data/topics'
+
+import topics from '@/seeddata/topics'
 import { TopicModel } from '@/db/models'
 import dbConnect from '@/db/dbConnect'
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
 import { useSession } from 'next-auth/react'
+import axios from 'axios'
 
 import AnonymousHomeView from '@/components/Home/AnonymousHomeView'
 import AuthenticatedHomeView from '@/components/Home/AuthenticatedHomeView'

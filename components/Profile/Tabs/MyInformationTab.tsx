@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 import { useSession } from 'next-auth/react'
+import Image from 'next/image'
 
 import EditAvatarModal from '@/components/Profile/Tabs/EditAvatarModal'
 import { useUserDetails } from '@/hooks/useUserDetails'

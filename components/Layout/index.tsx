@@ -1,10 +1,10 @@
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import axios from 'axios'
 import { useSession, signIn, signOut } from 'next-auth/react'
 
 import { BrandDividerIcon } from '@/components/Icons'
+import { useUserDetails } from '@/hooks/useUserDetails'
 import { defaultAvatarImg } from '@/util/constants'
 
 const normalizeAvatarSource = (value?: string | null) => {
@@ -22,45 +22,16 @@ const normalizeAvatarSource = (value?: string | null) => {
 
 export function Layout({ children }: { children: ReactNode }) {
   const { data: session } = useSession()
-  const [dbProfileImage, setDbProfileImage] = useState<string | null>(null)
+  const { user: userDetails } = useUserDetails(session?.user?.name)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
   const lineColor = '#dfdfdf'
   const profileImage = normalizeAvatarSource(
     session
-      ? dbProfileImage || session.user.image || defaultAvatarImg
+      ? userDetails?.avatarImgUrl || session.user.image || defaultAvatarImg
       : defaultAvatarImg
   )
-
-  useEffect(() => {
-    if (!session?.user?.name) {
-      return
-    }
-
-    let isMounted = true
-
-    const loadProfileImage = async () => {
-      try {
-        const res = await axios.get(`/api/users?username=${encodeURIComponent(session.user.name)}`)
-        const nextAvatar = normalizeAvatarSource(res?.data?.avatarImgUrl || session.user.image || defaultAvatarImg)
-
-        if (isMounted) {
-          setDbProfileImage(nextAvatar)
-        }
-      } catch {
-        if (isMounted) {
-          setDbProfileImage(normalizeAvatarSource(session.user.image || defaultAvatarImg))
-        }
-      }
-    }
-
-    void loadProfileImage()
-
-    return () => {
-      isMounted = false
-    }
-  }, [session?.user?.image, session?.user?.name])
 
   useEffect(() => {
     if (!menuOpen) return

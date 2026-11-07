@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useSession } from 'next-auth/react'
 
 import Modal from '@/components/Modal/Modal'
+import { useUserDetails } from '@/hooks/useUserDetails'
 
 interface UserLibraryAvatar {
   avatarSvg?: string
@@ -16,49 +17,31 @@ const svgToDataUri = (svg: string) => {
 
 const MyLibraryTab = () => {
   const { data: session } = useSession()
+  const { user, loading: userLoading } = useUserDetails(session?.user?.name)
   const [avatars, setAvatars] = useState<UserLibraryAvatar[]>([])
-  const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | undefined>()
   const [removeTarget, setRemoveTarget] = useState<UserLibraryAvatar | null>(null)
 
   const librarySections = [{ id: 'avatar-collection', title: 'Avatar Collection' }]
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (!session?.user?.name) {
+    if (!user) {
+      setAvatars([])
+      setUserId(undefined)
       return
     }
 
-    let isMounted = true
+    const savedAvatars = Array.isArray(user.library?.userAvatars)
+      ? user.library.userAvatars
+      : Array.isArray((user as Record<string, unknown>).userAvatars)
+        ? ((user as Record<string, unknown>).userAvatars as UserLibraryAvatar[])
+        : []
 
-    const loadLibrary = async () => {
-      try {
-        const res = await axios.get(`/api/users?username=${encodeURIComponent(session.user.name)}`)
-        const userRecord = res?.data?.userRecord ?? res?.data ?? {}
-        const currentUserId = userRecord?._id
-        const savedAvatars = Array.isArray(userRecord?.library?.userAvatars)
-          ? userRecord.library.userAvatars
-          : Array.isArray(userRecord?.userAvatars)
-            ? userRecord.userAvatars
-            : []
-
-        if (!isMounted) return
-
-        setUserId(currentUserId)
-        setAvatars(savedAvatars)
-      } catch (error) {
-        console.error('Failed to load avatar library:', error)
-        if (isMounted) setAvatars([])
-      } finally {
-        if (isMounted) setLoading(false)
-      }
-    }
-
-    void loadLibrary()
-
-    return () => {
-      isMounted = false
-    }
-  }, [session?.user?.name])
+    setUserId(user._id)
+    setAvatars(savedAvatars)
+  }, [user])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const equipAvatar = async (avatar: UserLibraryAvatar) => {
     if (!userId || !avatar.avatarSvg) return
@@ -101,7 +84,7 @@ const MyLibraryTab = () => {
             </div>
           </div>
 
-          {loading ? (
+          {userLoading ? (
             <div className="text-slate-300">Loading avatars...</div>
           ) : avatars.length === 0 ? (
             <div className="rounded-xl border border-dashed border-white/10 bg-[#1f2f3d] p-5 text-slate-300">

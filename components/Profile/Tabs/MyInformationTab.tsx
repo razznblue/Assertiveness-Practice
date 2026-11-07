@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import axios from 'axios'
 import { useSession } from 'next-auth/react'
 
 import EditAvatarModal from '@/components/Profile/Tabs/EditAvatarModal'
+import { useUserDetails } from '@/hooks/useUserDetails'
 import { defaultAvatarImg } from '@/util/constants'
 import type { MyInformationTabProps } from '@/types'
 
@@ -22,6 +22,7 @@ const normalizeAvatarSource = (value?: string | null) => {
 const MyInformationTab = ({ name, email, avatarImgUrl }: MyInformationTabProps) => {
   const { data: session } = useSession()
   const username = session?.user?.name
+  const { user } = useUserDetails(username)
 
   // The default avatar is never shown while we don't yet know the user's real one.
   const [avatarUrl, setAvatarUrl] = useState<string | null>(
@@ -31,34 +32,21 @@ const MyInformationTab = ({ name, email, avatarImgUrl }: MyInformationTabProps) 
   const [showEditAvatarModal, setShowEditAvatarModal] = useState(false)
   const hasPromptedForAvatarRef = useRef(false)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!username) return
 
-    const loadAvatar = async () => {
-      let savedAvatarUrl: string | undefined
+    const resolved = user?.avatarImgUrl || avatarImgUrl
+    setUserId(user?._id)
+    setAvatarUrl(normalizeAvatarSource(resolved))
 
-      try {
-        const res = await axios.get(`/api/users?username=${encodeURIComponent(username)}`)
-        setUserId(res?.data?._id)
-        savedAvatarUrl = res?.data?.avatarImgUrl
-      } catch {
-        // fall through to the prop / default below
-      }
-
-      const resolved = savedAvatarUrl || avatarImgUrl
-
-      // normalizeAvatarSource returns the default only when there's truly no avatar
-      setAvatarUrl(normalizeAvatarSource(resolved))
-
-      const needsAvatarPrompt = !resolved || !String(resolved).includes('image/svg+xml')
-      if (needsAvatarPrompt && !hasPromptedForAvatarRef.current) {
-        hasPromptedForAvatarRef.current = true
-        setShowEditAvatarModal(true)
-      }
+    const needsAvatarPrompt = !resolved || !String(resolved).includes('image/svg+xml')
+    if (needsAvatarPrompt && !hasPromptedForAvatarRef.current) {
+      hasPromptedForAvatarRef.current = true
+      setShowEditAvatarModal(true)
     }
-
-    void loadAvatar()
-  }, [avatarImgUrl, username])
+  }, [avatarImgUrl, user, username])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const details = [
     { label: 'Name', value: name || 'Not provided' },

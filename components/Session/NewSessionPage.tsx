@@ -6,11 +6,13 @@ import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
 
 import { SessionField, SessionInput } from '@/components/Session/SessionField'
+import { useUserDetails } from '@/hooks/useUserDetails'
 import { getFormattedDateTime } from '@/util/functions'
 import type { TopicConflictError } from '@/types'
 
 const NewSessionPage = () => {
   const { data: session, status } = useSession()
+  const { user } = useUserDetails(session?.user?.name)
   const router = useRouter()
 
   const querySessionName = typeof router.query.sessionName === 'string' ? router.query.sessionName : ''
@@ -133,37 +135,25 @@ const NewSessionPage = () => {
     }
   }
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (!router.isReady || hasQueryOverrides || !session?.user?.name) return
+    if (!router.isReady || hasQueryOverrides || !session?.user?.name || !user?.settings) return
 
-    let isMounted = true
+    const nextTimer = Number(user.settings?.defaultTimer ?? 60)
+    const nextDefault = Number.isFinite(nextTimer) && nextTimer > 0 ? nextTimer : 60
+    const nextAutofill = Boolean(user.settings?.autofillSessionName)
 
-    const fetchUserId = async () => {
-      const res = await axios.get(`/api/users?username=${session.user.name}`)
+    setDefaultTimerForUser(nextDefault)
+    setTimer(nextDefault)
+    setSessionTimerOverrideEnabled(false)
+    setReplaceTopicOnTimeout(Boolean(user.settings?.replaceTopicOnTimeout))
+    setAllowOvertime(Boolean(user.settings?.allowOvertime))
 
-      if (!isMounted) return
-
-      const nextTimer = Number(res?.data?.settings?.defaultTimer ?? 60)
-      const nextDefault = Number.isFinite(nextTimer) && nextTimer > 0 ? nextTimer : 60
-      const nextAutofill = Boolean(res?.data?.settings?.autofillSessionName)
-
-      setDefaultTimerForUser(nextDefault)
-      setTimer(nextDefault)
-      setSessionTimerOverrideEnabled(false)
-      setReplaceTopicOnTimeout(Boolean(res?.data?.settings?.replaceTopicOnTimeout))
-      setAllowOvertime(Boolean(res?.data?.settings?.allowOvertime))
-
-      if (nextAutofill && !sessionName) {
-        setSessionName(getGeneratedSessionName())
-      }
+    if (nextAutofill && !sessionName) {
+      setSessionName(getGeneratedSessionName())
     }
-
-    fetchUserId()
-
-    return () => {
-      isMounted = false
-    }
-  }, [hasQueryOverrides, router.isReady, session?.user?.name, sessionName])
+  }, [hasQueryOverrides, router.isReady, session?.user?.name, sessionName, user?.settings])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (status === 'loading') {
     return (

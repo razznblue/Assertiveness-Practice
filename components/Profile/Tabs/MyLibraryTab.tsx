@@ -21,7 +21,6 @@ const MyLibraryTab = () => {
   const [avatars, setAvatars] = useState<UserLibraryAvatar[]>([])
   const [userId, setUserId] = useState<string | undefined>()
   const [removeTarget, setRemoveTarget] = useState<UserLibraryAvatar | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const librarySections = [{ id: 'avatar-collection', title: 'Avatar Collection' }]
 
@@ -52,10 +51,8 @@ const MyLibraryTab = () => {
     try {
       await axios.patch(`/api/users/${userId}`, { avatarImgUrl: avatarDataUri })
       await refresh(true)
-      setSuccessMessage('Avatar equipped successfully.')
     } catch (error) {
       console.error('Failed to equip avatar:', error)
-      setSuccessMessage('Could not equip this avatar. Please try again.')
     }
   }
 
@@ -95,38 +92,58 @@ const MyLibraryTab = () => {
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {avatars.map((avatar, index) => (
-                <div
-                  key={`${avatar.seed ?? 'seed'}-${index}`}
-                  className="group relative rounded-2xl border border-white/10 bg-[#1f2f3d] p-3 text-center"
-                  title={avatar.seed ? `Seed: ${avatar.seed}` : 'No seed available'}
-                >
-                  <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-[#4ec7b4] bg-[#0a192f] mx-auto">
-                    <div
-                      className="h-full w-full"
-                      dangerouslySetInnerHTML={{ __html: avatar.avatarSvg ?? '' }}
-                    />
-                  </div>
+              {avatars.map((avatar, index) => {
+                const avatarDataUri = avatar.avatarSvg ? svgToDataUri(avatar.avatarSvg) : null
+                const isActive = Boolean(user?.avatarImgUrl && avatarDataUri && user.avatarImgUrl === avatarDataUri)
 
-                  <div className="mt-4 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => equipAvatar(avatar)}
-                      className="flex-1 rounded-xl bg-[#4ec7b4] px-3 py-2 text-sm font-semibold text-[#0A192F] transition hover:brightness-110"
-                    >
-                      Equip
-                    </button>
+                return (
+                  <div
+                    key={`${avatar.seed ?? 'seed'}-${index}`}
+                    className={`group relative rounded-2xl border p-3 text-center transition ${
+                      isActive
+                        ? 'border-[#4ec7b4] bg-[#1f2f3d] shadow-[0_0_0_2px_rgba(78,199,180,0.25)]'
+                        : 'border-white/10 bg-[#1f2f3d]'
+                    }`}
+                    title={avatar.seed ? `Seed: ${avatar.seed}` : 'No seed available'}
+                  >
+                    {isActive && (
+                      <span className="absolute right-3 top-3 rounded-full border border-[#4ec7b4] bg-[#4ec7b4]/10 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[#4ec7b4]">
+                        Active
+                      </span>
+                    )}
 
-                    <button
-                      type="button"
-                      onClick={() => setRemoveTarget(avatar)}
-                      className="rounded-xl border border-red-400/60 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/20"
-                    >
-                      Remove
-                    </button>
+                    <div className="mx-auto mt-2 flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-[#4ec7b4] bg-[#0a192f]">
+                      <div
+                        className="h-full w-full"
+                        dangerouslySetInnerHTML={{ __html: avatar.avatarSvg ?? '' }}
+                      />
+                    </div>
+
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => equipAvatar(avatar)}
+                        disabled={isActive}
+                        className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                          isActive
+                            ? 'cursor-default bg-[#4ec7b4]/10 text-[#9ae7db] opacity-90'
+                            : 'bg-[#4ec7b4] text-[#0A192F] hover:brightness-110'
+                        }`}
+                      >
+                        {isActive ? 'Active' : 'Equip'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setRemoveTarget(avatar)}
+                        className="rounded-xl border border-red-400/60 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/20"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
@@ -143,16 +160,6 @@ const MyLibraryTab = () => {
         onSecondaryClick={() => setRemoveTarget(null)}
         primaryButtonClassName="bg-red-500 text-white"
         secondaryButtonClassName="bg-white/10 text-white"
-      />
-
-      <Modal
-        open={Boolean(successMessage)}
-        onClose={() => setSuccessMessage(null)}
-        title={successMessage?.includes('Could not') ? 'Update failed' : 'Success'}
-        description={successMessage ?? 'Your update was completed.'}
-        primaryButtonText="Done"
-        primaryButtonClassName={successMessage?.includes('Could not') ? 'bg-red-500 text-white' : 'bg-[#4ec7b4] text-[#0A192F]'}
-        onPrimaryClick={() => setSuccessMessage(null)}
       />
     </div>
   )

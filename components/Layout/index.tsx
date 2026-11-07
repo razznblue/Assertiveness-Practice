@@ -5,17 +5,15 @@ import { useSession, signIn, signOut } from 'next-auth/react'
 
 import { BrandDividerIcon } from '@/components/Icons'
 import { useUserDetails } from '@/hooks/useUserDetails'
-import { defaultAvatarImg } from '@/util/constants'
 
 const normalizeAvatarSource = (value?: string | null) => {
-  if (!value) 
-    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(defaultAvatarImg)}`
+  if (!value) return null
 
   const trimmed = value.trim()
-  if (!trimmed) return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(defaultAvatarImg)}`
-  if (trimmed.startsWith('<svg')) 
+  if (!trimmed) return null
+  if (trimmed.startsWith('<svg')) {
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(trimmed)}`
-  
+  }
 
   return trimmed
 }
@@ -29,8 +27,8 @@ export function Layout({ children }: { children: ReactNode }) {
   const lineColor = '#dfdfdf'
   const profileImage = normalizeAvatarSource(
     session
-      ? userDetails?.avatarImgUrl || session.user.image || defaultAvatarImg
-      : defaultAvatarImg
+      ? userDetails?.avatarImgUrl || session.user.image || null
+      : null
   )
 
   useEffect(() => {
@@ -108,14 +106,18 @@ export function Layout({ children }: { children: ReactNode }) {
                       onClick={() => setMenuOpen((current) => !current)}
                       className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-[#1b2e3f] shadow-md shadow-black/20 transition hover:border-[#4ec7b4]"
                     >
-                      <Image
-                        src={profileImage}
-                        alt="Profile"
-                        width={44}
-                        height={44}
-                        className="h-full w-full object-cover"
-                        unoptimized={profileImage.startsWith('data:') || profileImage.startsWith('blob:')}
-                      />
+                      {profileImage ? (
+                        <Image
+                          src={profileImage}
+                          alt="Profile"
+                          width={44}
+                          height={44}
+                          className="h-full w-full object-cover"
+                          unoptimized={profileImage.startsWith('data:') || profileImage.startsWith('blob:')}
+                        />
+                      ) : (
+                        <div className="h-full w-full animate-pulse bg-[#243847]" />
+                      )}
                     </button>
 
                     {menuOpen && (

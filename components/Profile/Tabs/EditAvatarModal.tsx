@@ -3,6 +3,7 @@ import Image from 'next/image'
 import axios from 'axios'
 
 import Modal from '@/components/Modal/Modal'
+import { syncUserDetails } from '@/hooks/useUserDetails'
 import { generateAvatarWithSeed } from '@/util/avatar/avatar'
 
 interface EditAvatarModalProps {
@@ -120,7 +121,11 @@ const handleSave = async () => {
   try {
     const rawSvg = isDataUri(previewSvg) ? dataUriToSvg(previewSvg) : previewSvg
     const dataUrl = svgToDataUri(rawSvg)
-    await axios.patch(`/api/users/${userId}`, { avatarImgUrl: dataUrl })
+    const res = await axios.patch(`/api/users/${userId}`, { avatarImgUrl: dataUrl })
+    const nextUser = res?.data ?? null
+    if (nextUser?.username) {
+      syncUserDetails(nextUser.username, nextUser)
+    }
     onSaved(dataUrl)
     onClose()
   } catch (error) {
@@ -140,7 +145,11 @@ const handleAddToLibrary = async () => {
     const cleanSvg = isDataUri(previewSvg) ? dataUriToSvg(previewSvg) : previewSvg
 
     const nextLibrary = [...existingLibrary, { avatarSvg: cleanSvg, seed: previewEntry.seed ?? '' }]
-    await axios.patch(`/api/users/${userId}`, { library: { userAvatars: nextLibrary } })
+    const res = await axios.patch(`/api/users/${userId}`, { library: { userAvatars: nextLibrary } })
+    const nextUser = res?.data ?? null
+    if (nextUser?.username) {
+      syncUserDetails(nextUser.username, nextUser)
+    }
     alert('Avatar added to your library.')
   } catch (error) {
     console.error('Failed to save avatar to library:', error)

@@ -22,8 +22,34 @@ export interface UserDetails {
 
 const userDetailsCache = new Map<string, Promise<UserDetails | null>>()
 const userDetailsStore = new Map<string, UserDetails | null>()
+const userDetailsListeners = new Map<string, Set<() => void>>()
 
 const normalizeUsername = (username?: string | null) => username?.trim() || null
+
+const notifyUserDetails = (username: string) => {
+  const listeners = userDetailsListeners.get(username)
+  if (!listeners) return
+
+  listeners.forEach((listener) => listener())
+}
+
+export const syncUserDetails = (username?: string | null, nextUser?: UserDetails | null) => {
+  const normalized = normalizeUsername(username)
+  if (!normalized) return
+
+  userDetailsCache.delete(normalized)
+  userDetailsStore.set(normalized, nextUser ?? null)
+  notifyUserDetails(normalized)
+}
+
+export const invalidateUserDetails = (username?: string | null) => {
+  const normalized = normalizeUsername(username)
+  if (!normalized) return
+
+  userDetailsCache.delete(normalized)
+  userDetailsStore.delete(normalized)
+  notifyUserDetails(normalized)
+}
 
 export const useUserDetails = (username?: string | null) => {
   const safeUsername = normalizeUsername(username)
@@ -35,7 +61,7 @@ export const useUserDetails = (username?: string | null) => {
 
   const [loading, setLoading] = useState(() => !!safeUsername && !userDetailsStore.has(safeUsername))
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (force = false) => {
     if (!safeUsername) {
       setUser(null)
       setLoading(false)
@@ -43,8 +69,9 @@ export const useUserDetails = (username?: string | null) => {
     }
 
     const cached = userDetailsStore.get(safeUsername)
-    if (cached !== undefined) {
+    if (!force && cached !== undefined) {
       setUser(cached)
+      notifyUserDetails(safeUsername)
       setLoading(false)
       return cached
     }
@@ -67,10 +94,12 @@ export const useUserDetails = (username?: string | null) => {
       const nextUser = await request
       userDetailsStore.set(safeUsername, nextUser)
       setUser(nextUser)
+      notifyUserDetails(safeUsername)
       return nextUser
     } catch {
       userDetailsStore.set(safeUsername, null)
       setUser(null)
+      notifyUserDetails(safeUsername)
       return null
     } finally {
       userDetailsCache.delete(safeUsername)
@@ -97,5 +126,36 @@ export const useUserDetails = (username?: string | null) => {
   }, [refresh, safeUsername])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  return { user, loading, refresh }
+  useEffect(() => {
+    if (!safeUsername) return
+
+    const syncCurrentUser = () => {
+      setUser(userDetailsStore.get(safeUsername) ?? null)
+    }
+
+    const listeners = userDetailsListeners.get(safeUsername) ?? new Set<() => void>()
+    listeners.add(syncCurrentUser)
+    userDetailsListeners.set(safeUsername, listeners)
+
+    return () => {
+      const current = userDetailsListeners.get(safeUsername)
+      if (!current) return
+      current.delete(syncCurrentUser)
+      if (current.size === 0) {
+        userDetailsListeners.delete(safeUsername)
+      }
+    }
+  }, [safeUsername])
+
+  const syncUser = useCallback(
+    (nextUser?: UserDetails | null) => {
+      if (!safeUsername) return
+
+      syncUserDetails(safeUsername, nextUser ?? null)
+      setUser(nextUser ?? null)
+    },
+    [safeUsername],
+  )
+
+  return { user, loading, refresh, syncUser }
 }

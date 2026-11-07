@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent, type KeyboardEvent } from 'react
 import axios from 'axios'
 import { useSession } from 'next-auth/react'
 
+import Modal from '@/components/Modal/Modal'
 import { useUserDetails } from '@/hooks/useUserDetails'
 import type { UserSettings } from '@/types'
 
@@ -14,9 +15,10 @@ const defaultSettings: UserSettings = {
 
 const SettingsTab = () => {
   const { data: session } = useSession()
-  const { user } = useUserDetails(session?.user?.name)
+  const { user, refresh } = useUserDetails(session?.user?.name)
   const [settings, setSettings] = useState<UserSettings>(defaultSettings)
   const [saving, setSaving] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -84,7 +86,7 @@ const saveSettings = async () => {
   try {
     console.log('Settings being sent:', JSON.stringify(settings))
 
-    const res = await axios.patch(`/api/users/${user?._id}`, {
+    await axios.patch(`/api/users/${user?._id}`, {
       settings: {
         defaultTimer: settings.defaultTimer,
         autofillSessionName: settings.autofillSessionName,
@@ -93,8 +95,8 @@ const saveSettings = async () => {
       },
     })
 
-    console.log('Settings PATCH response:', res.data)
-
+    await refresh(true)
+    setShowSuccessModal(true)
   } catch (error) {
     console.error('Failed to save settings:', error)
   } finally {
@@ -163,6 +165,16 @@ const saveSettings = async () => {
       >
         {saving ? 'Saving...' : 'Save settings'}
       </button>
+
+      <Modal
+        open={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="Settings saved"
+        description="Your changes were saved successfully."
+        primaryButtonText="Done"
+        primaryButtonClassName="bg-[#4ec7b4] text-[#0A192F]"
+        onPrimaryClick={() => setShowSuccessModal(false)}
+      />
     </div>
   )
 }

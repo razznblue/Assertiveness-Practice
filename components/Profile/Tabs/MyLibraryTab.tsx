@@ -17,10 +17,11 @@ const svgToDataUri = (svg: string) => {
 
 const MyLibraryTab = () => {
   const { data: session } = useSession()
-  const { user, loading: userLoading } = useUserDetails(session?.user?.name)
+  const { user, loading: userLoading, refresh } = useUserDetails(session?.user?.name)
   const [avatars, setAvatars] = useState<UserLibraryAvatar[]>([])
   const [userId, setUserId] = useState<string | undefined>()
   const [removeTarget, setRemoveTarget] = useState<UserLibraryAvatar | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const librarySections = [{ id: 'avatar-collection', title: 'Avatar Collection' }]
 
@@ -50,10 +51,11 @@ const MyLibraryTab = () => {
 
     try {
       await axios.patch(`/api/users/${userId}`, { avatarImgUrl: avatarDataUri })
-      alert('Avatar equipped successfully.')
+      await refresh(true)
+      setSuccessMessage('Avatar equipped successfully.')
     } catch (error) {
       console.error('Failed to equip avatar:', error)
-      alert('Could not equip this avatar. Please try again.')
+      setSuccessMessage('Could not equip this avatar. Please try again.')
     }
   }
 
@@ -63,6 +65,7 @@ const MyLibraryTab = () => {
     try {
       const remaining = avatars.filter((avatar) => avatar.avatarSvg !== removeTarget.avatarSvg || avatar.seed !== removeTarget.seed)
       await axios.patch(`/api/users/${userId}`, { library: { userAvatars: remaining } })
+      await refresh(true)
       setAvatars(remaining)
       setRemoveTarget(null)
     } catch (error) {
@@ -140,6 +143,16 @@ const MyLibraryTab = () => {
         onSecondaryClick={() => setRemoveTarget(null)}
         primaryButtonClassName="bg-red-500 text-white"
         secondaryButtonClassName="bg-white/10 text-white"
+      />
+
+      <Modal
+        open={Boolean(successMessage)}
+        onClose={() => setSuccessMessage(null)}
+        title={successMessage?.includes('Could not') ? 'Update failed' : 'Success'}
+        description={successMessage ?? 'Your update was completed.'}
+        primaryButtonText="Done"
+        primaryButtonClassName={successMessage?.includes('Could not') ? 'bg-red-500 text-white' : 'bg-[#4ec7b4] text-[#0A192F]'}
+        onPrimaryClick={() => setSuccessMessage(null)}
       />
     </div>
   )

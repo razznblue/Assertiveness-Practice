@@ -10,7 +10,7 @@ import { getFormattedDateTime } from '@/util/functions'
 import type { TopicConflictError } from '@/types'
 
 const NewSessionPage = () => {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
 
   const querySessionName = typeof router.query.sessionName === 'string' ? router.query.sessionName : ''
@@ -164,6 +164,24 @@ const NewSessionPage = () => {
       isMounted = false
     }
   }, [hasQueryOverrides, router.isReady, session?.user?.name, sessionName])
+
+  if (status === 'loading') {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <main className="mt-20 flex h-full flex-col items-center justify-start">
+          <div className="flex min-h-[320px] items-center justify-center gap-4">
+            {[0, 1, 2].map((index) => (
+              <span
+                key={`new-session-loading-${index}`}
+                className="h-4 w-4 rounded-full bg-[#4ec7b4] animate-pulse"
+                style={{ animationDelay: `${index * 150}ms` }}
+              />
+            ))}
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   if (!session) {
     return (

@@ -8,11 +8,16 @@ import { BrandDividerIcon } from '@/components/Icons'
 import { defaultAvatarImg } from '@/util/constants'
 
 const normalizeAvatarSource = (value?: string | null) => {
-  if (!value) return defaultAvatarImg
-  if (value.trim().startsWith('<svg')) {
-    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(value)}`
-  }
-  return value
+  if (!value) 
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(defaultAvatarImg)}`
+
+  const trimmed = value.trim()
+  if (!trimmed) return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(defaultAvatarImg)}`
+  if (trimmed.startsWith('<svg')) 
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(trimmed)}`
+  
+
+  return trimmed
 }
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -23,7 +28,9 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const lineColor = '#dfdfdf'
   const profileImage = normalizeAvatarSource(
-    session ? (dbProfileImage || session.user.image || defaultAvatarImg) : defaultAvatarImg,
+    session
+      ? dbProfileImage || session.user.image || defaultAvatarImg
+      : defaultAvatarImg
   )
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import axios from 'axios'
 import { useSession } from 'next-auth/react'
@@ -9,36 +9,56 @@ import type { MyInformationTabProps } from '@/types'
 
 const normalizeAvatarSource = (value?: string | null) => {
   if (!value) return defaultAvatarImg
-  if (value.trim().startsWith('<svg')) {
-    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(value)}`
+
+  const trimmed = value.trim()
+  if (!trimmed) return defaultAvatarImg
+  if (trimmed.startsWith('<svg')) {
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(trimmed)}`
   }
-  return value
+
+  return trimmed
 }
 
 const MyInformationTab = ({ name, email, avatarImgUrl }: MyInformationTabProps) => {
   const { data: session } = useSession()
-  const [avatarUrl, setAvatarUrl] = useState(defaultAvatarImg)
+  const username = session?.user?.name
+
+  // The default avatar is never shown while we don't yet know the user's real one.
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    avatarImgUrl?.trim() ? normalizeAvatarSource(avatarImgUrl) : null
+  )
   const [userId, setUserId] = useState<string | undefined>()
   const [showEditAvatarModal, setShowEditAvatarModal] = useState(false)
+  const hasPromptedForAvatarRef = useRef(false)
 
   useEffect(() => {
+    if (!username) return
+
     const loadAvatar = async () => {
-      if (!session?.user?.name) return
+      let savedAvatarUrl: string | undefined
 
       try {
-        const res = await axios.get(`/api/users?username=${encodeURIComponent(session.user.name)}`)
-        const nextUserId = res?.data?._id
-        const nextAvatarUrl = normalizeAvatarSource(res?.data?.avatarImgUrl || avatarImgUrl || defaultAvatarImg)
-
-        setUserId(nextUserId)
-        setAvatarUrl(nextAvatarUrl)
+        const res = await axios.get(`/api/users?username=${encodeURIComponent(username)}`)
+        setUserId(res?.data?._id)
+        savedAvatarUrl = res?.data?.avatarImgUrl
       } catch {
-        setAvatarUrl(normalizeAvatarSource(avatarImgUrl || defaultAvatarImg))
+        // fall through to the prop / default below
+      }
+
+      const resolved = savedAvatarUrl || avatarImgUrl
+
+      // normalizeAvatarSource returns the default only when there's truly no avatar
+      setAvatarUrl(normalizeAvatarSource(resolved))
+
+      const needsAvatarPrompt = !resolved || !String(resolved).includes('image/svg+xml')
+      if (needsAvatarPrompt && !hasPromptedForAvatarRef.current) {
+        hasPromptedForAvatarRef.current = true
+        setShowEditAvatarModal(true)
       }
     }
 
     void loadAvatar()
-  }, [avatarImgUrl, session?.user?.name])
+  }, [avatarImgUrl, username])
 
   const details = [
     { label: 'Name', value: name || 'Not provided' },
@@ -52,20 +72,25 @@ const MyInformationTab = ({ name, email, avatarImgUrl }: MyInformationTabProps) 
       <div className="space-y-6">
         <div className="flex flex-col items-center rounded-2xl border border-white/10 bg-[#2d4054] p-6 text-center text-slate-200">
           <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 border-[#4ec7b4] bg-[#1f2f3d] shadow-lg shadow-black/20">
-            <Image
-              src={avatarUrl}
-              alt={`${name || 'User'} avatar`}
-              width={112}
-              height={112}
-              className="h-full w-full object-cover"
-              unoptimized={avatarUrl.startsWith('blob:') || avatarUrl.startsWith('data:')}
-            />
+            {avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt={`${name || 'User'} avatar`}
+                width={112}
+                height={112}
+                className="h-full w-full object-cover"
+                unoptimized={avatarUrl.startsWith('blob:') || avatarUrl.startsWith('data:')}
+              />
+            ) : (
+              <div className="h-full w-full animate-pulse bg-[#2d4054]" />
+            )}
           </div>
 
           <button
             type="button"
+            disabled={!avatarUrl}
             onClick={() => setShowEditAvatarModal(true)}
-            className="mt-4 text-sm font-medium text-[#4ec7b4] transition hover:text-[#7ed7c7]"
+            className="mt-4 text-sm font-medium text-[#4ec7b4] transition hover:text-[#7ed7c7] disabled:opacity-50"
           >
             Change avatar
           </button>
@@ -89,7 +114,7 @@ const MyInformationTab = ({ name, email, avatarImgUrl }: MyInformationTabProps) 
       <EditAvatarModal
         open={showEditAvatarModal}
         userId={userId}
-        currentAvatarUrl={avatarUrl}
+        currentAvatarUrl={avatarUrl ?? defaultAvatarImg}
         onClose={() => setShowEditAvatarModal(false)}
         onSaved={(nextAvatarUrl) => {
           setAvatarUrl(nextAvatarUrl)

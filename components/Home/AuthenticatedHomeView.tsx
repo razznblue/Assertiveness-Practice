@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import ActionButtonGrid from '@/components/Home/ActionButtonGrid'
 
 const actions = [
@@ -13,24 +15,38 @@ const AuthenticatedHomeView = ({
 }: {
   sessionName: string
   topicOfDay: string | null
-}) => (
-  <>
-    <div id="top-content" className="flex flex-col items-center">
-      <h1 className="text-3xl font-bold text-primary">Hello {sessionName}!</h1>
-      <p className="m-2 w-1/2 p-3 text-center text-lg text-white">
-        &ldquo;Being passive gets you nowhere. Being aggressive gets you noticed. Being assertive
-        gets you respect.&rdquo; - Steve Maraboli
-      </p>
-    </div>
+}) => {
+  const topicLink = topicOfDay ? `/session/new?topic=${encodeURIComponent(topicOfDay)}` : '/session/new'
 
-    <div id="bottom-content" className="flex flex-col items-center justify-evenly">
-      <div id="topic-of-day" className="text-white text">
-        <p className="mb-1 pb-4 text-xl">Topic Of The Day: {topicOfDay}</p>
+  return (
+    <>
+      <div id="top-content" className="flex flex-col items-center">
+        <h1 className="text-3xl font-bold text-primary">Hello {sessionName}!</h1>
+        <p className="m-2 w-1/2 p-3 text-center text-lg text-white">
+          &ldquo;Being passive gets you nowhere. Being aggressive gets you noticed. Being assertive
+          gets you respect.&rdquo; - Steve Maraboli
+        </p>
       </div>
 
-      <ActionButtonGrid actions={actions} />
-    </div>
-  </>
-)
+      <div id="bottom-content" className="flex flex-col items-center justify-evenly">
+        <div id="topic-of-day" className="text-white text">
+          <p className="mb-1 pb-4 text-xl text-white">Topic Of The Day:</p>
+          {topicOfDay ? (
+            <Link
+              href={topicLink}
+              className="inline-flex items-center rounded-full border border-[#4ec7b4] bg-[#4ec7b4]/10 px-4 py-2 text-lg font-semibold text-[#4ec7b4] transition hover:bg-[#4ec7b4]/20 hover:text-[#7ed7c7] focus:outline-none focus:ring-2 focus:ring-[#4ec7b4]"
+            >
+              {topicOfDay}
+            </Link>
+          ) : (
+            <span className="text-lg text-slate-300">Loading today&apos;s topic...</span>
+          )}
+        </div>
+
+        <ActionButtonGrid actions={actions} />
+      </div>
+    </>
+  )
+}
 
 export default AuthenticatedHomeView

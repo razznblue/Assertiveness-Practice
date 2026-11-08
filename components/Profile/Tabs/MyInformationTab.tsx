@@ -6,18 +6,7 @@ import EditAvatarModal from '@/components/Profile/Tabs/EditAvatarModal'
 import { useUserDetails } from '@/hooks/useUserDetails'
 import { defaultAvatarImg } from '@/util/constants'
 import type { MyInformationTabProps } from '@/types'
-
-const normalizeAvatarSource = (value?: string | null) => {
-  if (!value) return defaultAvatarImg
-
-  const trimmed = value.trim()
-  if (!trimmed) return defaultAvatarImg
-  if (trimmed.startsWith('<svg')) {
-    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(trimmed)}`
-  }
-
-  return trimmed
-}
+import { normalizeAvatarSource } from '@/util/functions'
 
 const MyInformationTab = ({ name, email, avatarImgUrl }: MyInformationTabProps) => {
   const { data: session } = useSession()

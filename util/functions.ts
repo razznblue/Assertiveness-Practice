@@ -1,3 +1,4 @@
+/* DATES */
 export const getFormattedDateTime = () => {
   const now = new Date()
 
@@ -32,6 +33,7 @@ export const dataUriToSvg = (value: string) => {
   }
 }
 
+/* Key Generation */
 export const generateRandomString = (length: number): string => {
   const charset =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_-+={}[]|'
@@ -51,4 +53,17 @@ export const getInitials = (fullName: string): string => {
     const lastName = fullName.split(' ')[1].toLowerCase()
     return firstName[0] + lastName[0]
   }
+}
+
+/* AVATARS */
+export const normalizeAvatarSource = (value?: string | null) => {
+  if (!value) return ''
+
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  if (trimmed.startsWith('<svg')) {
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(trimmed)}`
+  }
+
+  return trimmed
 }

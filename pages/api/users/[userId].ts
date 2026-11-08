@@ -38,7 +38,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       return throw404(res, `Player with ID ${id} does not exist`)
     }
     console.log('Incoming settings:', req.body.settings)
-console.log('Existing settings:', targetUser.settings)
+    console.log('Existing settings:', targetUser.settings)
 
     // Non-admins can only access their own user
     if (!isAdmin && targetUser.username !== sessionUsername) {
@@ -58,7 +58,7 @@ console.log('Existing settings:', targetUser.settings)
             return res.status(403).json({ error: `Forbidden: cannot update field "${key}"` })
           }
 
-        if (key === 'settings' && typeof value === 'object' && value !== null) {
+          if (key === 'settings' && typeof value === 'object' && value !== null) {
             const currentSettings = {
               defaultTimer: targetUser.settings?.defaultTimer ?? 60,
               autofillSessionName: targetUser.settings?.autofillSessionName ?? false,
@@ -109,7 +109,7 @@ console.log('Existing settings:', targetUser.settings)
       }
 
       return res.status(200).json({
-        userRecord
+        userRecord,
       })
     } else {
       return res.status(405).json({ error: 'Method Not Allowed' })

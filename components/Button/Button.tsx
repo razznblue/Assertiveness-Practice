@@ -16,17 +16,17 @@ const Button = (props: ButtonProps) => {
   }
 
   return (
-    <div
+    <button
       className={
         cssOvveride
           ? cssOvveride
-          : `${backgroundColor} text-center p-4 px-6 m-2 rounded-md min-w-40 cursor-pointer font-bold`
+          : `${backgroundColor} text-center p-2 px-6 m-2 rounded-md min-w-40 cursor-pointer font-bold`
       }
       onClick={handleClick}
     >
       {icon && icon}
       <p>{text}</p>
-    </div>
+    </button>
   )
 }
 

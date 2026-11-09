@@ -1,4 +1,5 @@
-import { modelOptions, prop } from '@typegoose/typegoose'
+import { modelOptions, prop, Severity } from '@typegoose/typegoose'
+
 
 @modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false },  options: { customName: 'UserAvatars' } })
 export class UserAvatars {
@@ -11,7 +12,7 @@ export class UserAvatars {
 
 @modelOptions({ schemaOptions: { versionKey: false, timestamps: false, _id: false },  options: { customName: 'UserLibrary' } })
 export class UserLibrary {
-  @prop()
+  @prop({ allowMixed: Severity.ALLOW })
   public userAvatars?: UserAvatars[]
 }
 

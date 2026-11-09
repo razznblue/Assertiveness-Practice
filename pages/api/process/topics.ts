@@ -10,12 +10,17 @@ import dbConnect from '@/db/dbConnect'
   Returns an object containing photoId, imageUrl, photographerName, photographerUrl, and photoUrl.
 */
 const getTopicImageObject = async (topic: string) => {
-  const unsplashURL = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(topic)}&client_id=${process.env.UNSPLASH_ACCESS_KEY}`
+  const unsplashURL = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(topic)}\&client_id=${process.env.UNSPLASH_ACCESS_KEY}`
   const imgResponse = await axios.get(unsplashURL)
+  if (!imgResponse?.data?.results?.length) {
+    console.error(`No Unsplash images found for topic ${topic}`)
+    return null
+  }
   const chosenImage = imgResponse?.data?.results?.[0]
 
   if (!chosenImage) {
-    throw new Error(`No Unsplash image found for topic ${topic}`)
+    console.error(`No Unsplash image found for topic ${topic}`)
+    return null
   }
 
   const unsplashParameters = '?utm_source=Assertiveness-Practice&utm_medium=referral'

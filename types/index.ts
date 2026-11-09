@@ -121,9 +121,16 @@ export interface MyProgressTabProps {
 
 export type RecordingStatus = 'inactive' | 'recording' | 'stopped'
 
+export interface TopicImageAttribution {
+  photographerName: string
+  photographerUrl: string
+  photoUrl: string
+}
+
 export interface AudioRecorderProps {
   topic?: string
   topicImage?: string
+  topicImageAttribution?: TopicImageAttribution
   sessionName?: string
   timerSeconds?: number
   allowOvertime?: boolean
@@ -175,6 +182,7 @@ export interface RecorderHeaderProps {
 export interface RecorderArtworkProps {
   topic: string
   topicImage: string
+  topicImageAttribution?: TopicImageAttribution
   recordingStatus: RecordingStatus
   recordingTime: number
   timerSeconds: number

@@ -95,6 +95,21 @@
   display: block;
 }
 
+.ar-image-attribution {
+  width: 100%;
+  max-width: 680px;
+  margin: 12px 0 0;
+  color: rgba(232, 228, 220, 0.65);
+  font-size: 12px;
+  text-align: center;
+}
+
+.ar-image-attribution a {
+  color: #4ec7b4;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ── Recording Overlay ── */
 .ar-image-overlay {
   position: absolute;

@@ -20,6 +20,7 @@ const mimeType = 'audio/webm'
 const AudioRecorder = ({
   topic = 'Notebook',
   topicImage = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80',
+  topicImageAttribution,
   sessionName = 'JanSession-1',
   timerSeconds = 60,
   allowOvertime = false,
@@ -190,6 +191,7 @@ const AudioRecorder = ({
           <RecorderArtwork
             topic={topic}
             topicImage={topicImage}
+            topicImageAttribution={topicImageAttribution}
             recordingStatus={recordingStatus}
             recordingTime={recordingTime}
             timerSeconds={timerSeconds}

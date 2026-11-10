@@ -52,7 +52,15 @@ const generateAvatarSeed = (topics: string[] = []) => {
     () => `${randomWord()}${randomWord()}${Math.floor(Math.random() * 100)}`
   ]
 
-  return randomItem(formats)()
+  const seed = randomItem(formats)()
+
+  // 30% chance to shuffling the generated seed
+  const shuffledSeed = Math.random() < 0.3 ? shuffleString(seed) : seed
+
+  // 50% chance to trim whitespace if the seed contains spaces
+  return shuffledSeed.includes(' ') && Math.random() < 0.5
+    ? shuffledSeed.replace(/\s/g, '')
+    : shuffledSeed
 }
 
 export const generateAvatarWithSeed = (topics: string[] = [], seedOverride?: string) => {
@@ -63,6 +71,17 @@ export const generateAvatarWithSeed = (topics: string[] = [], seedOverride?: str
     seed,
     svg: avatar.toString(),
   }
+}
+
+const shuffleString = (value: string) => {
+  const characters = value.split('')
+
+  for (let i = characters.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[characters[i], characters[j]] = [characters[j], characters[i]]
+  }
+
+  return characters.join('')
 }
 
 export const generateAvatar = (topics: string[] = []) => generateAvatarWithSeed(topics).svg

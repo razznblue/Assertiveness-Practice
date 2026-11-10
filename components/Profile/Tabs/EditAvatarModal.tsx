@@ -141,7 +141,10 @@ const EditAvatarModalContent = ({ open, userId, currentAvatarUrl, onClose, onSav
             ←
           </button>
 
-          <div className="flex h-40 w-40 items-center justify-center overflow-hidden rounded-full border-2 border-[#4ec7b4] bg-[#1f2f3d] shadow-lg shadow-black/20">
+          <div
+            title={previewEntry.seed ? `Seed: ${previewEntry.seed}` : 'No seed available'}
+            className="flex h-40 w-40 items-center justify-center overflow-hidden rounded-full border-2 border-[#4ec7b4] bg-[#1f2f3d] shadow-lg shadow-black/20"
+          >
             {previewSvg ? (
               isDataUri(previewSvg) ? (
                 <Image

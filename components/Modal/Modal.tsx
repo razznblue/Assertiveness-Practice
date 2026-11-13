@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 
+import Button from '@/components/Button/Button'
 import styles from '@/styles/Audio.module.css'
 import type { ModalProps } from '@/types'
 
@@ -38,7 +39,7 @@ export default function Modal({
         {(primaryButtonText || secondaryButtonText) && (
           <div className={styles['ar-modal-actions']}>
             {secondaryButtonText && (
-              <button
+              <Button
                 type="button"
                 className={clsx(
                   styles['ar-modal-btn'],
@@ -48,11 +49,11 @@ export default function Modal({
                 onClick={onSecondaryClick || onClose}
               >
                 {secondaryButtonText}
-              </button>
+              </Button>
             )}
 
             {primaryButtonText && (
-              <button
+              <Button
                 type="button"
                 className={clsx(
                   styles['ar-modal-btn'],
@@ -62,7 +63,7 @@ export default function Modal({
                 onClick={onPrimaryClick || onClose}
               >
                 {primaryButtonText}
-              </button>
+              </Button>
             )}
           </div>
         )}

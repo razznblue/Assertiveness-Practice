@@ -7,12 +7,7 @@ import { authOptions } from '@/pages/api/auth/[...nextauth]'
 
 import dbConnect from '@/db/dbConnect'
 import { RecordingModel, SessionModel, UserModel } from '@/db/models'
-import {
-  deleteAudioFromR2,
-  extractKeyFromUrl,
-  getSignedAudioUrl,
-  uploadAudioToR2,
-} from '@/util/r2'
+import { deleteAudioFromR2, extractKeyFromUrl, getSignedAudioUrl, uploadAudioToR2 } from '@/util/r2'
 
 export const config = {
   api: {
@@ -98,8 +93,12 @@ async function handleGetSessions(
     return res.status(404).json({ error: 'User not found.' })
   }
 
-  const sessions = await SessionModel.find({ userId: currentUser._id }).sort({ createdAt: -1 }).lean()
-  const recordings = await RecordingModel.find({ userId: currentUser._id }).sort({ createdAt: -1 }).lean()
+  const sessions = await SessionModel.find({ userId: currentUser._id })
+    .sort({ createdAt: -1 })
+    .lean()
+  const recordings = await RecordingModel.find({ userId: currentUser._id })
+    .sort({ createdAt: -1 })
+    .lean()
 
   return res.status(200).json({
     sessions,
@@ -118,8 +117,12 @@ async function handleDeleteRecording(req: NextApiRequest, res: NextApiResponse) 
     let recordingToDelete: Record<string, unknown> | null = null
 
     if (recordingId) {
-      recordingToDelete = (await RecordingModel.findById(recordingId)) as Record<string, unknown> | null
-      const recordingUrl = typeof recordingToDelete?.recordingUrl === 'string' ? recordingToDelete.recordingUrl : ''
+      recordingToDelete = (await RecordingModel.findById(recordingId)) as Record<
+        string,
+        unknown
+      > | null
+      const recordingUrl =
+        typeof recordingToDelete?.recordingUrl === 'string' ? recordingToDelete.recordingUrl : ''
       if (recordingUrl) {
         objectKey = extractKeyFromUrl(recordingUrl) || objectKey
       }
@@ -139,11 +142,13 @@ async function handleDeleteRecording(req: NextApiRequest, res: NextApiResponse) 
 
     if (recordingId) {
       const deletedRecording =
-        recordingToDelete ?? ((await RecordingModel.findById(recordingId).lean()) as Record<string, unknown> | null)
+        recordingToDelete ??
+        ((await RecordingModel.findById(recordingId).lean()) as Record<string, unknown> | null)
       await RecordingModel.findByIdAndDelete(recordingId)
-      const sessionForRecording = deletedRecording && typeof deletedRecording.sessionId !== 'undefined'
-        ? String(deletedRecording.sessionId)
-        : sessionId
+      const sessionForRecording =
+        deletedRecording && typeof deletedRecording.sessionId !== 'undefined'
+          ? String(deletedRecording.sessionId)
+          : sessionId
 
       if (sessionForRecording) {
         await RecordingModel.deleteMany({ sessionId: sessionForRecording })
@@ -166,7 +171,10 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
   let savedUserId: string | null = null
 
   try {
-    const { fields, files } = await new Promise<{ fields: formidable.Fields; files: formidable.Files }>((resolve, reject) => {
+    const { fields, files } = await new Promise<{
+      fields: formidable.Fields
+      files: formidable.Files
+    }>((resolve, reject) => {
       const form = formidable({
         multiples: false,
         maxFileSize: 100 * 1024 * 1024,
@@ -192,7 +200,10 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
     const sessionName = normalizeSessionName(sessionNameInput)
     const username = (getFieldValue(fields.username) || getFieldValue(fields.userId) || '').trim()
     const topicId = getFieldValue(fields.topicId)
-    const topicName = normalizeSessionName(getFieldValue(fields.topicName)) || getFieldValue(fields.topicName)?.trim() || ''
+    const topicName =
+      normalizeSessionName(getFieldValue(fields.topicName)) ||
+      getFieldValue(fields.topicName)?.trim() ||
+      ''
     const timerValue = Number(getFieldValue(fields.timer))
     const timer = Number.isFinite(timerValue) && timerValue > 0 ? timerValue : 60
 
@@ -270,34 +281,35 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
 
       try {
         await mongoSession.withTransaction(async () => {
+          console.log('SESSION MODEL DIAGNOSTICS:', {
+            modelName: SessionModel.modelName,
+            collectionName: SessionModel.collection.name,
+            schemaPaths: Object.keys(SessionModel.schema.paths),
+            documentName: sessionDoc.name,
+            document: sessionDoc.toObject(),
+          })
 
-        console.log('SESSION MODEL DIAGNOSTICS:', {
-          modelName: SessionModel.modelName,
-          collectionName: SessionModel.collection.name,
-          schemaPaths: Object.keys(SessionModel.schema.paths),
-          documentName: sessionDoc.name,
-          document: sessionDoc.toObject(),
-        })
-
-        console.log('RECORDING MODEL DIAGNOSTICS:', {
-          modelName: RecordingModel.modelName,
-          collectionName: RecordingModel.collection.name,
-          schemaPaths: Object.keys(RecordingModel.schema.paths),
-        })
+          console.log('RECORDING MODEL DIAGNOSTICS:', {
+            modelName: RecordingModel.modelName,
+            collectionName: RecordingModel.collection.name,
+            schemaPaths: Object.keys(RecordingModel.schema.paths),
+          })
 
           await sessionDoc.save({ session: mongoSession })
           savedSessionId = String(sessionDoc._id)
 
           const recordingId = `recording-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
           const recordingDoc = await RecordingModel.create(
-            [{
-              recordingId,
-              recordingUrl: upload.url,
-              sessionId: sessionDoc._id,
-              userId: user._id,
-              duration: timer,
-              fileSize: fileBuffer.byteLength,
-            }],
+            [
+              {
+                recordingId,
+                recordingUrl: upload.url,
+                sessionId: sessionDoc._id,
+                userId: user._id,
+                duration: timer,
+                fileSize: fileBuffer.byteLength,
+              },
+            ],
             { session: mongoSession }
           )
 
@@ -334,7 +346,10 @@ async function handleMultipartSessionSave(req: NextApiRequest, res: NextApiRespo
       try {
         await deleteAudioFromR2(upload.key)
       } catch (cleanupError) {
-        console.warn('Failed to clean up uploaded audio after session/recording save failure:', cleanupError)
+        console.warn(
+          'Failed to clean up uploaded audio after session/recording save failure:',
+          cleanupError
+        )
       }
 
       if (savedSessionId) {

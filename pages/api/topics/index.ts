@@ -28,16 +28,38 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(409).json({ error: 'Topic already exists', topic: existingTopic })
     }
 
+    // Fetch an Image via the Unsplash API
     const unsplashURL = `https://api.unsplash.com/search/photos?query=${name}&client_id=${process.env.UNSPLASH_ACCESS_KEY}`
     const imgResponse = await axios.get(unsplashURL)
-    const imageURL = imgResponse?.data?.results[0].urls?.regular
+    const chosenImage = imgResponse?.data?.results[0];
 
-    const newTopic = new TopicModel({ name: name, image: imageURL })
+    const unsplashParameters = "?utm_source=Assertiveness-Practice&utm_medium=referral";
 
-    await newTopic.save()
-    console.log('created new topic', { topic: newTopic })
+    // Build UnsplashImageDTO
+    const photographerFullName = (chosenImage.user.first_name || '') + ' ' + (chosenImage.user.last_name || '')
+    const finalPhotographerName = photographerFullName.trim() || chosenImage.user.username
+    const unsplashImageDto = {
+      photoId: chosenImage.id,
+      imageUrl: chosenImage.urls.regular,
+      photographerName: finalPhotographerName,
 
-    return res.status(201).json({ message: 'Topic created successfully', topic: newTopic })
+      photographerUrl:
+        `${chosenImage.user.links.html}${unsplashParameters}`,
+
+      photoUrl:
+        `${chosenImage.links.html}${unsplashParameters}`,
+    }
+
+    if (unsplashImageDto && unsplashImageDto.imageUrl) {
+      const newTopic = new TopicModel({ name: name, image: unsplashImageDto.imageUrl, unsplashImage: unsplashImageDto })
+      
+      await newTopic.save()
+      console.log('created new topic', { topic: newTopic })
+
+      return res.status(201).json({ message: 'Topic created successfully', topic: newTopic })
+    } else {
+      return res.status(500).json({ error: 'Error creating Unsplash image' })
+    }
   }
 
   return res.status(500).json({ error: `Method [${method}] not Supported` })

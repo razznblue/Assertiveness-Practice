@@ -4,6 +4,7 @@ import axios from 'axios'
 
 import Modal from '@/components/Modal/Modal'
 import { useUserDetails } from '@/hooks/useUserDetails'
+import Button from '@/components/Button/Button'
 import { svgToDataUri } from '@/util/functions'
 import { UserLibraryAvatar } from '@/types'
 
@@ -112,7 +113,7 @@ const MyLibraryTab = () => {
                     </div>
 
                     <div className="mt-4 flex gap-2">
-                      <button
+                      <Button
                         type="button"
                         onClick={() => equipAvatar(avatar)}
                         disabled={isActive}
@@ -123,15 +124,15 @@ const MyLibraryTab = () => {
                         }`}
                       >
                         {isActive ? 'Active' : 'Equip'}
-                      </button>
+                      </Button>
 
-                      <button
+                      <Button
                         type="button"
                         onClick={() => setRemoveTarget(avatar)}
                         className="rounded-xl border border-red-400/60 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/20"
                       >
                         Remove
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )

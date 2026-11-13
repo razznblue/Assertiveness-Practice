@@ -8,6 +8,7 @@ import {
   StopIcon,
   TopicIcon,
 } from '@/components/Icons'
+import Button from '@/components/Button/Button'
 import styles from '@/styles/Audio.module.css'
 import type {
   AudioPlaybackProps,
@@ -27,6 +28,7 @@ export const RecorderHeader = ({ topic, sessionName }: RecorderHeaderProps) => (
 export const RecorderArtwork = ({
   topic,
   topicImage,
+  topicImageAttribution,
   recordingStatus,
   recordingTime,
   timerSeconds,
@@ -37,21 +39,35 @@ export const RecorderArtwork = ({
   const displayTime = allowOvertime && overflowSeconds > 0 ? `+${formatTime(overflowSeconds)}` : formatTime(Math.max(0, timerSeconds - recordingTime))
 
   return (
-    <div className={styles['ar-image-wrapper']}>
-      <Image loading="eager" src={topicImage} alt={topic} width={800} height={400} />
-      <div
-        className={clsx(
-          styles['ar-image-overlay'],
-          recordingStatus === 'recording' && styles.visible
-        )}
-      >
-        <div className={styles['ar-recording-indicator']}>
-          <div className={styles['ar-rec-dot']} />
-          <span className={styles['ar-rec-label']}>Recording</span>
-          <span className={styles['ar-rec-time']}>{displayTime}</span>
+    <>
+      <div className={styles['ar-image-wrapper']}>
+        <Image loading="eager" src={topicImage} alt={topic} width={800} height={400} />
+        <div
+          className={clsx(
+            styles['ar-image-overlay'],
+            recordingStatus === 'recording' && styles.visible
+          )}
+        >
+          <div className={styles['ar-recording-indicator']}>
+            <div className={styles['ar-rec-dot']} />
+            <span className={styles['ar-rec-label']}>Recording</span>
+            <span className={styles['ar-rec-time']}>{displayTime}</span>
+          </div>
         </div>
       </div>
-    </div>
+      {topicImageAttribution && (
+        <p className={styles['ar-image-attribution']}>
+          Photo by{' '}
+          <a href={topicImageAttribution.photographerUrl} target="_blank" rel="noopener noreferrer">
+            {topicImageAttribution.photographerName}
+          </a>
+          {' '}on{' '}
+          <a href={topicImageAttribution.photoUrl} target="_blank" rel="noopener noreferrer">
+            Unsplash
+          </a>
+        </p>
+      )}
+    </>
   )
 }
 
@@ -67,9 +83,9 @@ export const RecorderActionButton = ({
   className,
   onClick,
 }: RecorderActionButtonProps) => (
-  <button type="button" className={className} onClick={onClick}>
+  <Button type="button" className={className} onClick={onClick}>
     {children}
-  </button>
+  </Button>
 )
 
 export const ReviewSessionButton = ({ onClick }: { onClick?: () => void }) => (

@@ -6,7 +6,6 @@ import dbConnect from '@/db/dbConnect'
 import { UserModel } from '@/db/models'
 import { throw404 } from '@/helpers/APIHelper'
 
-
 type UserSettingsSource = {
   get?: (key: string) => string | number | boolean | undefined
   defaultTimer?: number
@@ -18,7 +17,7 @@ type UserSettingsSource = {
 const readSetting = <T>(
   settings: UserSettingsSource | undefined,
   key: keyof UserSettingsSource,
-  fallback: T,
+  fallback: T
 ): T => {
   if (!settings) return fallback
 

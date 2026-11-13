@@ -5,44 +5,146 @@ import topics from '@/seeddata/topics'
 import { TopicModel } from '@/db/models'
 import dbConnect from '@/db/dbConnect'
 
-const getTopicImage = async (topic: string) => {
-  try {
-    console.log(`getting image for topic ${topic}`)
-    const url = `https://api.unsplash.com/search/photos?query=${topic}&client_id=${process.env.UNSPLASH_ACCESS_KEY}`
-    const res = await axios.get(url)
-    if (res?.data && res?.data?.results) {
-      return res?.data?.results[0].urls?.regular
-    } else {
-      return console.error('Could not find image on unsplash response', res?.data)
-    }
-  } catch (error) {
-    return console.error(`Error retrieving image for topic ${topic}`, error)
+const skipTopics = ['Padme Amidala']
+
+/*
+  Retrieves an image object from Unsplash for a given topic.
+  Returns an object containing photoId, imageUrl, photographerName, photographerUrl, and photoUrl.
+*/
+const getTopicImageObject = async (topic: string) => {
+  const unsplashURL = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(topic)}\&client_id=${process.env.UNSPLASH_ACCESS_KEY}`
+  const imgResponse = await axios.get(unsplashURL)
+  if (!imgResponse?.data?.results?.length) {
+    console.error(`No Unsplash images found for topic ${topic}`)
+    return null
+  }
+  const chosenImage = imgResponse?.data?.results?.[0]
+
+  if (!chosenImage) {
+    console.error(`No Unsplash image found for topic ${topic}`)
+    return null
+  }
+
+  const unsplashParameters = '?utm_source=Assertiveness-Practice&utm_medium=referral'
+
+  const photographerFullName = `${chosenImage.user.first_name || ''} ${chosenImage.user.last_name || ''}`
+  const finalPhotographerName = photographerFullName.trim() || chosenImage.user.username
+  return {
+    photoId: chosenImage.id,
+    imageUrl: chosenImage.urls.regular,
+    photographerName: finalPhotographerName,
+    photographerUrl: `${chosenImage.user.links.html}${unsplashParameters}`,
+    photoUrl: `${chosenImage.links.html}${unsplashParameters}`,
   }
 }
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await dbConnect()
 
-  const size: number = Number(req?.query?.size) || 10
+  /* `size` is optional. If omitted, backfill all records. */
+  const sizeParam = req?.query?.size
+  let size = Infinity
+
+  if (sizeParam !== undefined && sizeParam !== '') {
+    const requestedSize = Number(sizeParam)
+    if (!Number.isFinite(requestedSize) || requestedSize <= 0) {
+      return res.status(400).json({ error: '`size` must be a positive number' })
+    }
+    size = Math.min(requestedSize, 20)
+  }
   let backfillAmount = 0
 
+  /* process DB Topics */
+  if (req?.query?.all === 'true') {
+    const topicsMissingImages = (await TopicModel.find({
+      $or: [
+        { unsplashImage: { $exists: false } },
+        { unsplashImage: null },
+      ],
+    })) 
+      .filter(topic => !skipTopics.includes(topic.name))
+    let updatedCount = 0
+
+    for (const topic of topicsMissingImages) {
+      try {
+        topic.unsplashImage = await getTopicImageObject(topic.name)
+        await topic.save()
+        updatedCount++
+        console.log(`Fetched new image for topic ${topic.name}: ${topic.unsplashImage.imageUrl}`)
+      } catch (error) {
+        const errorStatus = axios.isAxiosError(error) ? error.response?.status : undefined
+        console.error(`Error processing Unsplash image for topic ${topic.name}`, { status: errorStatus })
+        const remainingCount = await TopicModel.countDocuments({
+          $or: [
+            { unsplashImage: { $exists: false } },
+            { unsplashImage: null },
+          ],
+        })
+        return res.status(500).json({
+          error: `Failed to process Unsplash image for topic ${topic.name}`,
+          attemptedCount: updatedCount + 1,
+          updatedCount,
+          remainingCount,
+        })
+      }
+    }
+
+    const remainingCount = await TopicModel.countDocuments({
+      $or: [
+        { unsplashImage: { $exists: false } },
+        { unsplashImage: null },
+      ],
+    })
+    return res.status(200).json({
+      message: `Processed ${updatedCount} topics`,
+      limit: 20,
+      updatedCount,
+      remainingCount,
+    })
+  }
+
+  /* Log Helpful Information for Topics Without Images */
+  if (req?.query?.infoOnly === 'true') {
+    const allTopics = await TopicModel.find()
+    let countWithoutImage = 0
+
+    for (const topic of allTopics) {
+      if (!topic.unsplashImage) {
+        console.log(`Topic: ${topic.name} does not have an image`)
+        countWithoutImage++
+      } else {
+        console.log(`Topic: ${topic.name}, Image: ${topic.unsplashImage.imageUrl}`)
+      }
+    }
+    console.log(`Total topics without an Unsplash image: ${countWithoutImage}`)
+    return res.send({ countWithoutImage, topics: allTopics })
+  }
+
+  /* Backfill topics from seeddata */
   let count = 0
   for (const topicName of topics) {
     if (count < size) {
       const exists = await TopicModel.findOne({ name: topicName })
       if (!exists) {
         const newTopic = new TopicModel()
-        newTopic.name = topicName
-        newTopic.image = await getTopicImage(topicName)
+        newTopic.name = topicName.toString()
+        newTopic.unsplashImage = await getTopicImageObject(topicName.toString())
         await newTopic.save()
         console.log(`Saved new Topic ${topicName}`)
         backfillAmount++
         count++
-      } else {
-        console.log(`Skipped existing topic ${topicName}`)
+      } else if (!exists.unsplashImage) {
+        exists.unsplashImage = await getTopicImageObject(topicName.toString())
+        if (exists.unsplashImage) {
+          console.log(`Fetched new image for existing topic ${topicName}: ${exists.unsplashImage.imageUrl}`)
+        }
+        await exists.save()
+        count++
+        backfillAmount++
       }
     }
   }
+
   console.log('Completed Saving Topics')
-  res.send(`Backfilled ${backfillAmount} Topics to DB`)
+  return res.send(`Backfilled ${backfillAmount} Topics to DB`)
 }

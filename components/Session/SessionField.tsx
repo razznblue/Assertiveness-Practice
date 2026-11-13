@@ -1,4 +1,5 @@
 import type { SessionFieldProps, SessionInputProps } from '@/types'
+import Button from '@/components/Button/Button'
 
 export const SessionField = ({ label, children, helperText, onHelperClick }: SessionFieldProps) => (
   <div className="input flex w-full flex-col items-center p-2">
@@ -7,9 +8,9 @@ export const SessionField = ({ label, children, helperText, onHelperClick }: Ses
       {children}
     </div>
     {helperText && (
-      <button type="button" onClick={onHelperClick} className="cursor-pointer pt-1 text-sm text-white/80">
+      <Button type="button" onClick={onHelperClick} className="cursor-pointer pt-1 text-sm text-white/80">
         {helperText}
-      </button>
+      </Button>
     )}
   </div>
 )

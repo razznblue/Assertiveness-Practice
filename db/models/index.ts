@@ -8,3 +8,4 @@ export const UserModel = getModelForClass(User)
 export const TopicModel = getModelForClass(Topic)
 export const SessionModel = getModelForClass(Session)
 export const RecordingModel = getModelForClass(Recording)
+

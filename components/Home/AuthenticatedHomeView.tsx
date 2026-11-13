@@ -17,24 +17,26 @@ const AuthenticatedHomeView = ({
   topicOfDay: string | null
 }) => {
   const topicLink = topicOfDay ? `/session/new?topic=${encodeURIComponent(topicOfDay)}` : '/session/new'
+  const userFirstname = sessionName.split(' ')[0];
 
   return (
     <>
       <div id="top-content" className="flex flex-col items-center">
-        <h1 className="text-3xl font-bold text-primary">Hello {sessionName}!</h1>
-        <p className="m-2 w-1/2 p-3 text-center text-lg text-white">
+        <h1 className="text-3xl font-bold text-primary">Welcome back {userFirstname}!</h1>
+        <h3 className="mt-4 text-xl text-white">QOTD:</h3>
+        <p className="mb-2 w-1/2 pb-3 text-center text-lg text-white">
           &ldquo;Being passive gets you nowhere. Being aggressive gets you noticed. Being assertive
           gets you respect.&rdquo; - Steve Maraboli
         </p>
       </div>
 
       <div id="bottom-content" className="flex flex-col items-center justify-evenly">
-        <div id="topic-of-day" className="text-white text">
-          <p className="mb-1 pb-4 text-xl text-white">Topic Of The Day:</p>
+        <div id="topic-of-day" className="text-white text-center flex-col">
+          <p className="pb-2 text-xl text-white">Topic Of The Day:</p>
           {topicOfDay ? (
             <Link
               href={topicLink}
-              className="inline-flex items-center rounded-full border border-[#4ec7b4] bg-[#4ec7b4]/10 px-4 py-2 text-lg font-semibold text-[#4ec7b4] transition hover:bg-[#4ec7b4]/20 hover:text-[#7ed7c7] focus:outline-none focus:ring-2 focus:ring-[#4ec7b4]"
+              className="mb-2 inline-flex items-center rounded-full border border-[#4ec7b4] bg-[#4ec7b4]/10 px-4 py-2 text-lg font-semibold text-[#4ec7b4] transition hover:bg-[#4ec7b4]/20 hover:text-[#7ed7c7] focus:outline-none focus:ring-2 focus:ring-[#4ec7b4]"
             >
               {topicOfDay}
             </Link>

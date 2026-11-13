@@ -1,11 +1,24 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
 import axios from 'axios'
 
 import AudioRecorder from '@/components/AudioRecorder/AudioRecorder'
 import Modal from '@/components/Modal'
+import Button from '@/components/Button/Button'
 import { CheckIcon } from '@/components/Icons'
+import type { TopicImageAttribution } from '@/types'
+
+const isHttpUrl = (value: unknown): value is string => {
+  if (typeof value !== 'string') return false
+
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
 
 export default function SessionScreen() {
   const router = useRouter()
@@ -18,13 +31,20 @@ export default function SessionScreen() {
   const shouldReplaceTopicOnTimeout = router.query.replaceTopicOnTimeout === 'true'
   const allowOvertime = router.query.allowOvertime === 'true'
 
-  const [topic, setTopic] = useState('')
-  const [topicImage, setTopicImage] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
+  const [topicDetails, setTopicDetails] = useState<{
+    topicId: string
+    name: string
+    image?: string
+    attribution?: TopicImageAttribution
+  }>()
+  const [loadedTopicId, setLoadedTopicId] = useState<string>()
   const [isUploading, setIsUploading] = useState(false)
   const [pendingUploadKey, setPendingUploadKey] = useState<string | null>(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const hasFetched = useRef(false)
+  const topic = topicDetails?.topicId === topicId ? topicDetails?.name ?? '' : ''
+  const topicImage = topicDetails?.topicId === topicId ? topicDetails?.image : undefined
+  const topicImageAttribution = topicDetails?.topicId === topicId ? topicDetails?.attribution : undefined
+  const isLoading = !router.isReady || (!!topicId && loadedTopicId !== topicId)
   const backLink = `/session/new?${new URLSearchParams({
     sessionName: sessionName ?? '',
     topic: topic || '',
@@ -35,22 +55,47 @@ export default function SessionScreen() {
   }).toString()}`
 
   useEffect(() => {
-    if (!topicId || hasFetched.current) return
-    hasFetched.current = true
+    if (!topicId) return
+    const controller = new AbortController()
 
     const fetchTopic = async () => {
       try {
-        const res = await axios.get(`/api/topics/${topicId}`)
-        setTopic(res?.data?.name ?? '')
-        setTopicImage(res?.data?.image ?? '')
+        const res = await axios.get(`/api/topics/${topicId}`, { signal: controller.signal })
+        const topicData = res?.data
+        const unsplashImage = topicData?.unsplashImage
+        const hasCompleteUnsplashImage =
+          typeof unsplashImage?.photographerName === 'string'
+          && unsplashImage.photographerName.trim().length > 0
+          && isHttpUrl(unsplashImage?.imageUrl)
+          && isHttpUrl(unsplashImage?.photographerUrl)
+          && isHttpUrl(unsplashImage?.photoUrl)
+
+        let image: string | undefined
+        let attribution: TopicImageAttribution | undefined
+        if (hasCompleteUnsplashImage) {
+          image = unsplashImage.imageUrl
+          attribution = {
+            photographerName: unsplashImage.photographerName,
+            photographerUrl: unsplashImage.photographerUrl,
+            photoUrl: unsplashImage.photoUrl,
+          }
+        } else {
+          image = topicData?.image || undefined
+        }
+        setTopicDetails({ topicId, name: topicData?.name ?? '', image, attribution })
       } catch (e) {
-        console.error('Failed to fetch topic:', e)
+        if (!axios.isCancel(e)) {
+          console.error('Failed to fetch topic:', e)
+        }
       } finally {
-        setIsLoading(false)
+        if (!controller.signal.aborted) {
+          setLoadedTopicId(topicId)
+        }
       }
     }
 
     fetchTopic()
+    return () => controller.abort()
   }, [topicId])
 
   const deletePendingUpload = async () => {
@@ -178,6 +223,7 @@ export default function SessionScreen() {
       <AudioRecorder
         topic={topic}
         topicImage={topicImage}
+        topicImageAttribution={topicImageAttribution}
         sessionName={sessionName}
         timerSeconds={timer}
         allowOvertime={allowOvertime}
@@ -197,27 +243,27 @@ export default function SessionScreen() {
         icon={<CheckIcon size={26} style={{ stroke: '#38bda4' }} />}
       >
         <div className="mt-4 flex flex-col gap-3">
-          <button
+          <Button
             type="button"
             className="rounded-xl bg-[#4ec7b4] px-4 py-3 font-semibold text-[#0A192F]"
             onClick={handleSuccessClose}
           >
             Back To Home
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 font-semibold text-white"
             onClick={handleNewSessionSameTopic}
           >
             Start a New Session
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className="rounded-xl border border-[#4ec7b4]/60 bg-[#132737] px-4 py-3 font-semibold text-[#4ec7b4]"
             onClick={handleGoToProgress}
           >
             Go To My Progress
-          </button>
+          </Button>
         </div>
       </Modal>
     </>

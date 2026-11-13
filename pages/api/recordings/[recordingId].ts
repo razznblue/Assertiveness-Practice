@@ -41,6 +41,17 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     } else if (req.method === 'DELETE') {
       await RecordingModel.findByIdAndDelete(id)
       return res.status(200).json({ message: `Recording ${id} deleted` })
+    } else if (req.method === 'PATCH') {
+      const { rating } = req.body
+
+      if (typeof rating !== 'number' || rating < 0 || rating > 5) {
+        return res.status(400).json({ error: 'Rating must be a number between 0 and 5' })
+      }
+
+      recording.rating = rating
+      await recording.save()
+
+      return res.status(200).json(recording.toObject())
     } else {
       return res.status(405).json({ error: 'Method Not Allowed' })
     }
@@ -48,3 +59,4 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(500).json({ error: 'Unknown Error Occurred' })
   }
 }
+

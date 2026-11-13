@@ -32,6 +32,9 @@ class Recording {
 
   @prop()
   public fileSize: number
+
+  @prop({ required: false, min: 0, max: 5 })
+  public rating?: number // 0-5 with 0.5 increments (e.g., 4.5)
 }
 
 export default Recording

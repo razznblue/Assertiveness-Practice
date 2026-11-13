@@ -6,6 +6,7 @@ import axios from 'axios'
 import AudioRecorder from '@/components/AudioRecorder/AudioRecorder'
 import Modal from '@/components/Modal'
 import Button from '@/components/Button/Button'
+import StarRating from '@/components/StarRating/StarRating'
 import { CheckIcon } from '@/components/Icons'
 import type { TopicImageAttribution } from '@/types'
 
@@ -41,6 +42,8 @@ export default function SessionScreen() {
   const [isUploading, setIsUploading] = useState(false)
   const [pendingUploadKey, setPendingUploadKey] = useState<string | null>(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [sessionRating, setSessionRating] = useState(0)
+  const [pendingRecordingId, setPendingRecordingId] = useState<string | null>(null)
   const topic = topicDetails?.topicId === topicId ? topicDetails?.name ?? '' : ''
   const topicImage = topicDetails?.topicId === topicId ? topicDetails?.image : undefined
   const topicImageAttribution = topicDetails?.topicId === topicId ? topicDetails?.attribution : undefined
@@ -130,11 +133,13 @@ export default function SessionScreen() {
       formData.append('timer', String(timer))
       formData.append('username', session?.user?.name ?? '')
 
-      await axios.post('/api/sessions', formData, {
+      const response = await axios.post('/api/sessions', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 
       setPendingUploadKey(null)
+      setPendingRecordingId(response?.data?.recording?._id)
+      setSessionRating(0)
       setShowSuccessModal(true)
     } catch (e) {
       console.error('Failed to save session:', e)
@@ -142,6 +147,7 @@ export default function SessionScreen() {
       setIsUploading(false)
     }
   }
+
 
   const handleRestart = async () => {
     await deletePendingUpload()
@@ -187,18 +193,54 @@ export default function SessionScreen() {
   }
 
   const handleNewSessionSameTopic = async () => {
+    if (sessionRating === 0) {
+      return
+    }
+
+    try {
+      await axios.post(`/api/recordings/${pendingRecordingId}/rate`, {
+        rating: sessionRating,
+      })
+    } catch (error) {
+      console.error('Failed to save rating:', error)
+    }
+
     setShowSuccessModal(false)
     await deletePendingUpload()
     await router.push('/session/new')
   }
 
   const handleGoToProgress = async () => {
+    if (sessionRating === 0) {
+      return
+    }
+
+    try {
+      await axios.post(`/api/recordings/${pendingRecordingId}/rate`, {
+        rating: sessionRating,
+      })
+    } catch (error) {
+      console.error('Failed to save rating:', error)
+    }
+
     setShowSuccessModal(false)
     await deletePendingUpload()
     await router.push('/profile')
   }
 
   const handleSuccessClose = async () => {
+    if (sessionRating === 0) {
+      return
+    }
+
+    try {
+      await axios.post(`/api/recordings/${pendingRecordingId}/rate`, {
+        rating: sessionRating,
+      })
+    } catch (error) {
+      console.error('Failed to save rating:', error)
+    }
+
     setShowSuccessModal(false)
     await deletePendingUpload()
     await router.push('/')
@@ -242,28 +284,56 @@ export default function SessionScreen() {
         description="Your recording was saved successfully and added to your progress history."
         icon={<CheckIcon size={26} style={{ stroke: '#38bda4' }} />}
       >
-        <div className="mt-4 flex flex-col gap-3">
-          <Button
-            type="button"
-            className="rounded-xl bg-[#4ec7b4] px-4 py-3 font-semibold text-[#0A192F]"
-            onClick={handleSuccessClose}
-          >
-            Back To Home
-          </Button>
-          <Button
-            type="button"
-            className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 font-semibold text-white"
-            onClick={handleNewSessionSameTopic}
-          >
-            Start a New Session
-          </Button>
-          <Button
-            type="button"
-            className="rounded-xl border border-[#4ec7b4]/60 bg-[#132737] px-4 py-3 font-semibold text-[#4ec7b4]"
-            onClick={handleGoToProgress}
-          >
-            Go To My Progress
-          </Button>
+        <div className="mt-6 flex flex-col gap-6">
+          <div>
+            <p className="mb-3 text-sm font-semibold text-slate-300">Rate your session</p>
+            <div className="rounded-xl border border-white/10 bg-[#1f2f3d] p-4">
+              <StarRating 
+                onRatingChange={setSessionRating}
+                currentRating={sessionRating}
+                size={36}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <Button
+              type="button"
+              disabled={sessionRating === 0}
+              className={`rounded-xl px-4 py-3 font-semibold transition ${
+                sessionRating === 0
+                  ? 'cursor-not-allowed bg-slate-500 text-slate-300 opacity-50'
+                  : 'bg-[#4ec7b4] text-[#0A192F] hover:opacity-90'
+              }`}
+              onClick={handleSuccessClose}
+            >
+              Back To Home
+            </Button>
+            <Button
+              type="button"
+              disabled={sessionRating === 0}
+              className={`rounded-xl border px-4 py-3 font-semibold transition ${
+                sessionRating === 0
+                  ? 'cursor-not-allowed border-slate-600 bg-slate-900/30 text-slate-400 opacity-50'
+                  : 'border-white/15 bg-white/5 text-white hover:bg-white/10'
+              }`}
+              onClick={handleNewSessionSameTopic}
+            >
+              Start a New Session
+            </Button>
+            <Button
+              type="button"
+              disabled={sessionRating === 0}
+              className={`rounded-xl border px-4 py-3 font-semibold transition ${
+                sessionRating === 0
+                  ? 'cursor-not-allowed border-slate-600 bg-slate-900/30 text-slate-400 opacity-50'
+                  : 'border-[#4ec7b4]/60 bg-[#132737] text-[#4ec7b4] hover:bg-[#1f2f3d]'
+              }`}
+              onClick={handleGoToProgress}
+            >
+              Go To My Progress
+            </Button>
+          </div>
         </div>
       </Modal>
     </>

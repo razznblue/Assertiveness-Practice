@@ -11,6 +11,7 @@ export interface HistoryItem {
   recording?: {
     _id?: string
     recordingUrl?: string
+    rating?: number
   }
 }
 
@@ -29,6 +30,7 @@ export interface HistoryRecording {
   sessionId?: string
   userId?: string
   recordingUrl?: string
+  rating?: number
 }
 
 export type ProfileTab = 'My Progress' | 'My Information' | 'My Library' | 'Achievements' | 'Settings' | 'Feedback' | 'Practice Tips' | 'Logout'

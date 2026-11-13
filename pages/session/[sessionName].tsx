@@ -41,9 +41,9 @@ export default function SessionScreen() {
   const [isUploading, setIsUploading] = useState(false)
   const [pendingUploadKey, setPendingUploadKey] = useState<string | null>(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const topic = topicDetails?.topicId === topicId ? topicDetails.name : ''
-  const topicImage = topicDetails?.topicId === topicId ? topicDetails.image : undefined
-  const topicImageAttribution = topicDetails?.topicId === topicId ? topicDetails.attribution : undefined
+  const topic = topicDetails?.topicId === topicId ? topicDetails?.name ?? '' : ''
+  const topicImage = topicDetails?.topicId === topicId ? topicDetails?.image : undefined
+  const topicImageAttribution = topicDetails?.topicId === topicId ? topicDetails?.attribution : undefined
   const isLoading = !router.isReady || (!!topicId && loadedTopicId !== topicId)
   const backLink = `/session/new?${new URLSearchParams({
     sessionName: sessionName ?? '',

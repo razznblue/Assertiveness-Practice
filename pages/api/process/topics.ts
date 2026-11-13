@@ -5,6 +5,8 @@ import topics from '@/seeddata/topics'
 import { TopicModel } from '@/db/models'
 import dbConnect from '@/db/dbConnect'
 
+const skipTopics = ['Padme Amidala']
+
 /*
   Retrieves an image object from Unsplash for a given topic.
   Returns an object containing photoId, imageUrl, photographerName, photographerUrl, and photoUrl.
@@ -39,20 +41,28 @@ const getTopicImageObject = async (topic: string) => {
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   await dbConnect()
 
-  const requestedSize = Number(req?.query?.size)
-  const size = Number.isFinite(requestedSize) && requestedSize > 0
-    ? Math.min(requestedSize, 20)
-    : 10
+  /* `size` is optional. If omitted, backfill all records. */
+  const sizeParam = req?.query?.size
+  let size = Infinity
+
+  if (sizeParam !== undefined && sizeParam !== '') {
+    const requestedSize = Number(sizeParam)
+    if (!Number.isFinite(requestedSize) || requestedSize <= 0) {
+      return res.status(400).json({ error: '`size` must be a positive number' })
+    }
+    size = Math.min(requestedSize, 20)
+  }
   let backfillAmount = 0
 
   /* process DB Topics */
   if (req?.query?.all === 'true') {
-    const topicsMissingImages = await TopicModel.find({
+    const topicsMissingImages = (await TopicModel.find({
       $or: [
         { unsplashImage: { $exists: false } },
         { unsplashImage: null },
       ],
-    }).limit(20)
+    })) 
+      .filter(topic => !skipTopics.includes(topic.name))
     let updatedCount = 0
 
     for (const topic of topicsMissingImages) {

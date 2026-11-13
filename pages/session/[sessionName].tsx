@@ -5,6 +5,7 @@ import axios from 'axios'
 
 import AudioRecorder from '@/components/AudioRecorder/AudioRecorder'
 import Modal from '@/components/Modal'
+import Button from '@/components/Button/Button'
 import { CheckIcon } from '@/components/Icons'
 import type { TopicImageAttribution } from '@/types'
 
@@ -242,27 +243,27 @@ export default function SessionScreen() {
         icon={<CheckIcon size={26} style={{ stroke: '#38bda4' }} />}
       >
         <div className="mt-4 flex flex-col gap-3">
-          <button
+          <Button
             type="button"
             className="rounded-xl bg-[#4ec7b4] px-4 py-3 font-semibold text-[#0A192F]"
             onClick={handleSuccessClose}
           >
             Back To Home
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 font-semibold text-white"
             onClick={handleNewSessionSameTopic}
           >
             Start a New Session
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className="rounded-xl border border-[#4ec7b4]/60 bg-[#132737] px-4 py-3 font-semibold text-[#4ec7b4]"
             onClick={handleGoToProgress}
           >
             Go To My Progress
-          </button>
+          </Button>
         </div>
       </Modal>
     </>

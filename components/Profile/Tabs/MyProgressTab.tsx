@@ -1,4 +1,5 @@
 import { PlayIcon, TrashIcon } from '@/components/Icons'
+import Button from '@/components/Button/Button'
 import type { MyProgressTabProps } from '@/types'
 
 const MyProgressTab = ({
@@ -58,14 +59,14 @@ const MyProgressTab = ({
           {item.recordingUrl && (
             <div className="mt-5 flex items-center justify-between gap-4 rounded-xl border border-slate-300 bg-white/30 px-4 py-3">
               <div className="flex items-center gap-4 text-[#0a192f]">
-                <button
+                <Button
                   type="button"
                   className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#4ec7b4] text-white transition hover:scale-[1.02]"
                   aria-label="Play recording"
                   onClick={() => onPlay(item._id)}
                 >
                   <PlayIcon size={20} />
-                </button>
+                </Button>
                 <audio
                   ref={(element) => {
                     audioRefs.current[item._id] = element
@@ -79,7 +80,7 @@ const MyProgressTab = ({
                 />
               </div>
 
-              <button
+              <Button
                 type="button"
                 className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#e85d5d] text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label="Delete recording"
@@ -87,7 +88,7 @@ const MyProgressTab = ({
                 onClick={() => onDelete(item)}
               >
                 {deletingId === (item.recording?._id || item._id) ? '…' : <TrashIcon size={20} />}
-              </button>
+              </Button>
             </div>
           )}
         </div>

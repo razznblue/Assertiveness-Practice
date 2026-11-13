@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import axios from 'axios'
 
 import Modal from '@/components/Modal'
+import Button from '@/components/Button/Button'
 import { ChevronIcon } from '@/components/Icons'
 import MyInformationTab from '@/components/Profile/Tabs/MyInformationTab'
 import MyProgressTab from '@/components/Profile/Tabs/MyProgressTab'
@@ -34,7 +35,7 @@ const ProfileSidebar = ({
 
         return (
           <li key={tab}>
-            <button
+            <Button
               type="button"
               onClick={() => {
                 if (tab === 'Logout') {
@@ -52,7 +53,7 @@ const ProfileSidebar = ({
               ].join(' ')}
             >
               {tab}
-            </button>
+            </Button>
           </li>
         )
       })}

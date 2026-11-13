@@ -232,13 +232,13 @@ const AudioRecorder = ({
               <ReviewSessionButton onClick={() => setShowModal(true)} />
             )}
 
-            <button
+            <Button
               type="button"
               className={clsx(styles['ar-btn'], styles['ar-btn-danger'])}
               onClick={() => handleAction('home')}
             >
               End Session
-            </button>
+            </Button>
           </div>
         </main>
       </div>
@@ -262,31 +262,31 @@ const AudioRecorder = ({
           </div>
         )}
         <div className={styles['ar-modal-actions']}>
-          <button
+          <Button
             type="button"
             className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-primary'])}
             onClick={() => handleAction('save')}
           >
             <SaveIcon size={16} />
             Save Session
-          </button>
+          </Button>
           <div className="ar-modal-divider" />
-          <button
+          <Button
             type="button"
             className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-secondary'])}
             onClick={() => handleAction('restart')}
           >
             <ResetIcon size={16} />
             Try Again — Same Topic
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className={clsx(styles['ar-modal-btn'], styles['ar-modal-btn-danger'])}
             onClick={() => handleAction('home')}
           >
             <HomeIcon size={16} />
             Back to Home
-          </button>
+          </Button>
         </div>
       </Modal>
     </>

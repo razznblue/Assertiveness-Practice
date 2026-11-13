@@ -7,6 +7,7 @@ import { useUserDetails } from '@/hooks/useUserDetails'
 import { defaultAvatarImg } from '@/util/constants'
 import type { MyInformationTabProps } from '@/types'
 import { normalizeAvatarSource } from '@/util/functions'
+import Button from '@/components/Button/Button'
 
 const MyInformationTab = ({ name, email, avatarImgUrl }: MyInformationTabProps) => {
   const { data: session } = useSession()
@@ -63,14 +64,14 @@ const MyInformationTab = ({ name, email, avatarImgUrl }: MyInformationTabProps) 
             )}
           </div>
 
-          <button
+          <Button
             type="button"
             disabled={!avatarUrl}
             onClick={() => setShowEditAvatarModal(true)}
             className="mt-4 text-sm font-medium text-[#4ec7b4] transition hover:text-[#7ed7c7] disabled:opacity-50"
           >
             Change avatar
-          </button>
+          </Button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

@@ -6,6 +6,7 @@ import Image from 'next/image'
 import axios from 'axios'
 
 import { SessionField, SessionInput } from '@/components/Session/SessionField'
+import Button from '@/components/Button/Button'
 import { useUserDetails } from '@/hooks/useUserDetails'
 import { getFormattedDateTime } from '@/util/functions'
 import type { TopicConflictError } from '@/types'
@@ -247,21 +248,21 @@ const NewSessionPage = () => {
         </div>
 
         <div className="absolute bottom-0 flex w-full items-center justify-between border-t border-gray px-4 py-2">
-          <button
+          <Button
             type="button"
             className="rounded-md bg-white px-4 py-2 font-bold text-black"
             onClick={() => router.push('/')}
           >
             ← Back
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className={`rounded-md bg-primary px-4 py-2 font-bold text-black ${isStarting || !sessionName || timer <= 0 ? 'cursor-not-allowed opacity-50' : ''}`}
             disabled={isStarting || !sessionName || timer <= 0}
             onClick={handleStartClick}
           >
             {isStarting ? 'Starting...' : 'Start'}
-          </button>
+          </Button>
         </div>
       </main>
     </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
+import Button from '@/components/Button/Button'
 
 const FeedbackTab = () => {
   const [message, setMessage] = useState('')
@@ -35,14 +36,14 @@ const FeedbackTab = () => {
         className="w-full rounded-xl border border-white/10 bg-[#1f2f3d] px-3 py-3 text-white placeholder:text-slate-400 focus:border-[#4ec7b4] focus:outline-none"
       />
       <div className="mt-4 flex justify-end">
-        <button
+        <Button
           type="button"
           onClick={submitFeedback}
           disabled={isSubmitting || !message.trim()}
           className="rounded-xl bg-[#4ec7b4] px-5 py-2.5 font-semibold text-[#0A192F] transition disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? 'Sending...' : 'Send feedback'}
-        </button>
+        </Button>
       </div>
     </div>
   )

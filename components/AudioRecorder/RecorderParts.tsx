@@ -8,6 +8,7 @@ import {
   StopIcon,
   TopicIcon,
 } from '@/components/Icons'
+import Button from '@/components/Button/Button'
 import styles from '@/styles/Audio.module.css'
 import type {
   AudioPlaybackProps,
@@ -82,9 +83,9 @@ export const RecorderActionButton = ({
   className,
   onClick,
 }: RecorderActionButtonProps) => (
-  <button type="button" className={className} onClick={onClick}>
+  <Button type="button" className={className} onClick={onClick}>
     {children}
-  </button>
+  </Button>
 )
 
 export const ReviewSessionButton = ({ onClick }: { onClick?: () => void }) => (

@@ -3,6 +3,7 @@ import Image from 'next/image'
 import axios from 'axios'
 
 import Modal from '@/components/Modal/Modal'
+import Button from '@/components/Button/Button'
 import { syncUserDetails } from '@/hooks/useUserDetails'
 import { generateAvatarWithSeed } from '@/util/avatar/avatar'
 import { svgToDataUri, dataUriToSvg, normalizeAvatarSource } from '@/util/functions'
@@ -131,7 +132,7 @@ const EditAvatarModalContent = ({ open, userId, currentAvatarUrl, onClose, onSav
     >
       <div className="flex flex-col items-center gap-4 py-4">
         <div className="flex items-center gap-3">
-          <button
+          <Button
             type="button"
             aria-label="Previous avatar"
             onClick={handleGoBack}
@@ -139,7 +140,7 @@ const EditAvatarModalContent = ({ open, userId, currentAvatarUrl, onClose, onSav
             className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-[#243847] text-xl text-white transition hover:bg-[#304d64] disabled:cursor-not-allowed disabled:opacity-40"
           >
             ←
-          </button>
+          </Button>
 
           <div
             title={previewEntry.seed ? `Seed: ${previewEntry.seed}` : 'No seed available'}
@@ -166,7 +167,7 @@ const EditAvatarModalContent = ({ open, userId, currentAvatarUrl, onClose, onSav
             )}
           </div>
 
-          <button
+          <Button
             type="button"
             aria-label="Next avatar"
             disabled={avatarIndex >= avatarHistory.length - 1}
@@ -174,27 +175,27 @@ const EditAvatarModalContent = ({ open, userId, currentAvatarUrl, onClose, onSav
             className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-[#243847] text-xl text-white transition hover:bg-[#304d64] disabled:cursor-not-allowed disabled:opacity-40"
           >
             →
-          </button>
+          </Button>
         </div>
 
         <div className="flex gap-3">
-          <button
+          <Button
             type="button"
             onClick={generateNewAvatar}
             disabled={isLoading || isSaving}
             className="rounded-xl bg-[#243847] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#304d64] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isLoading ? 'Generating...' : 'Generate new avatar'}
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
             onClick={handleAddToLibrary}
             disabled={isSaving || !userId || !previewSvg}
             className="rounded-xl bg-[#4ec7b4] px-4 py-2 text-sm font-semibold text-[#0A192F] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Add To Library
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

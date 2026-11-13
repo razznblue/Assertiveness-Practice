@@ -17,7 +17,6 @@ const AuthenticatedHomeView = ({
   topicOfDay: string | null
 }) => {
   const topicLink = topicOfDay ? `/session/new?topic=${encodeURIComponent(topicOfDay)}` : '/session/new'
-
   const userFirstname = sessionName.split(' ')[0];
 
   return (

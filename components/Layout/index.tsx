@@ -5,6 +5,7 @@ import Image from 'next/image'
 
 import { BrandDividerIcon } from '@/components/Icons'
 import { useUserDetails } from '@/hooks/useUserDetails'
+import Button from '@/components/Button/Button'
 
 const normalizeAvatarSource = (value?: string | null) => {
   if (!value) return null
@@ -99,7 +100,7 @@ export function Layout({ children }: { children: ReactNode }) {
                   </Link>
 
                   <div ref={menuRef} className="relative">
-                    <button
+                    <Button
                       type="button"
                       aria-label="Open profile menu"
                       aria-expanded={menuOpen}
@@ -118,7 +119,7 @@ export function Layout({ children }: { children: ReactNode }) {
                       ) : (
                         <div className="h-full w-full animate-pulse bg-[#243847]" />
                       )}
-                    </button>
+                    </Button>
 
                     {menuOpen && (
                       <div className="absolute right-0 top-full z-30 mt-3 w-64 overflow-hidden rounded-2xl border border-white/10 bg-[#1b2e3f] p-2 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
@@ -138,7 +139,7 @@ export function Layout({ children }: { children: ReactNode }) {
                               {item.label}
                             </Link>
                           ))}
-                          <button
+                          <Button
                             type="button"
                             onClick={() => {
                               setMenuOpen(false)
@@ -147,20 +148,20 @@ export function Layout({ children }: { children: ReactNode }) {
                             className="mt-1 w-full rounded-xl border border-[#4ec7b4]/30 bg-[#4ec7b4]/10 px-3 py-2 text-left text-base font-medium text-[#4ec7b4] transition hover:bg-[#4ec7b4]/20"
                           >
                             Sign Out
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     )}
                   </div>
                 </>
               ) : (
-                <button
+                <Button
                   type="button"
                   className="relative inline-flex h-10 cursor-pointer items-center justify-center rounded-md px-3.5 align-middle text-[18px] font-medium text-[#4ec7b4] transition-colors duration-200 hover:bg-[rgba(0,68,255,0.06)]"
                   onClick={() => signIn()}
                 >
                   Sign In
-                </button>
+                </Button>
               )}
             </nav>
           </div>

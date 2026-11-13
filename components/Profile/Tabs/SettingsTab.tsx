@@ -4,6 +4,7 @@ import axios from 'axios'
 
 import Modal from '@/components/Modal/Modal'
 import { useUserDetails } from '@/hooks/useUserDetails'
+import Button from '@/components/Button/Button'
 import type { UserSettings } from '@/types'
 
 const defaultSettings: UserSettings = {
@@ -157,14 +158,14 @@ const saveSettings = async () => {
         </div>
       </div>
 
-      <button
+      <Button
         type="button"
         onClick={saveSettings}
         disabled={!user?._id || saving}
         className="rounded-xl bg-[#4ec7b4] px-5 py-3 font-semibold text-[#0A192F] transition disabled:cursor-not-allowed disabled:opacity-60"
       >
         {saving ? 'Saving...' : 'Save settings'}
-      </button>
+      </Button>
 
       <Modal
         open={showSuccessModal}
